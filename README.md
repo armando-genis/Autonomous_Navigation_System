@@ -1,8 +1,9 @@
 # Autonomous_Navigation_System
  
 ## 📥 Install dependencies
-```bash
+Before installing the necessary dependencies, remember to source the appropriate ROS2 environment for your ROS2 version. This ensures the correct packages are installed for your distribution.
 
+```bash
 #fundamental libraries
 sudo apt-get install libeigen3-dev
 sudo apt install libpcl-dev
@@ -30,7 +31,7 @@ sudo apt install libgtsam-dev libgtsam-unstable-dev
 ```
 
 ## 📦 Install github repository
-Install the github repository inside the folder
+Clone the GitHub repository into the `ros2_ws/src/Autonomous_Navigation_System/` folder.
 ```bash
 # LIO SAM
 git clone https://github.com/TixiaoShan/LIO-SAM.git
