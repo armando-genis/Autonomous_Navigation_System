@@ -18,32 +18,13 @@ from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
 
+
     ld = launch.LaunchDescription()
-
-    lidar_tf = launch_ros.actions.Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        arguments=['0', '0', '-1.8', '0', '-0.174533', '0', 'velodyne', 'base_link']
-    )
-
-    # base_link to base_footprint
-    chassis_tf = launch_ros.actions.Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        arguments=['0', '0', '-0.38', '0', '0', '0', 'base_link', 'base_footprint']
-    )
-
-    # base_link to warning_obstacle
-    warning_obstacle_tf = launch_ros.actions.Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        arguments=['1.2', '0', '0', '0', '0', '0', 'base_link', 'warning_obstacle']
-    )
 
     localization_param_dir = launch.substitutions.LaunchConfiguration(
         'localization_param_dir',
         default=os.path.join(
-            get_package_share_directory('mapping_localization_launch'),
+            get_package_share_directory('global_navigation_launch'),
             'config',
             'localization.yaml'))
 
@@ -54,8 +35,7 @@ def generate_launch_description():
         executable='lidar_localization_node',
         parameters=[localization_param_dir],
         remappings=[
-        ('/cloud', '/points_fusion'),
-        ('/vectornav/imu', '/imu') 
+        ('/cloud','/points_rotated')
         ],
         output='screen')
 
@@ -97,13 +77,7 @@ def generate_launch_description():
 
     ld.add_action(from_unconfigured_to_inactive)
     ld.add_action(from_inactive_to_active)
-
     ld.add_action(lidar_localization)
-    ld.add_action(lidar_tf)
-    ld.add_action(chassis_tf)
-    ld.add_action(warning_obstacle_tf)
-
-
     ld.add_action(to_inactive)
 
     return ld

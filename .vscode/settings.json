@@ -1,3 +1,17 @@
 {
-    "ros.distro": "humble"
+    "ros.distro": "humble",
+    "python.autoComplete.extraPaths": [
+        "/home/genis/personal/sdv_ws/install/velodyne_msgs/local/lib/python3.10/dist-packages",
+        "/home/genis/personal/sdv_ws/install/vectornav_msgs/local/lib/python3.10/dist-packages",
+        "/home/genis/personal/sdv_ws/install/lio_sam/local/lib/python3.10/dist-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/genis/personal/sdv_ws/install/velodyne_msgs/local/lib/python3.10/dist-packages",
+        "/home/genis/personal/sdv_ws/install/vectornav_msgs/local/lib/python3.10/dist-packages",
+        "/home/genis/personal/sdv_ws/install/lio_sam/local/lib/python3.10/dist-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ]
 }

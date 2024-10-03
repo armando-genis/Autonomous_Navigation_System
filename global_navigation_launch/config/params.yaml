@@ -8,8 +8,8 @@
     gpsTopic: "odometry/gpsz"                    # GPS odometry topic from navsat, see module_navsat.launch file
 
     # Frames
-    lidarFrame: "velodyne"
-    baselinkFrame: "base_link"
+    lidarFrame: "velodyne"                        # lidar frame
+    baselinkFrame: "base_link"                # robot base frame
     odometryFrame: "odom"
     mapFrame: "map"
 

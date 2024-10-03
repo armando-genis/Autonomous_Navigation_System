@@ -107,8 +107,13 @@ void LidarImuSync::points_imuCallback(const ImuMsg::ConstSharedPtr &msg1, const 
 
     // get the imu data
     sensor_msgs::msg::Imu imu_data = *msg1;
+    imu_data.header.frame_id = msg1->header.frame_id;
+    imu_data.header.stamp = msg1->header.stamp;
+
     // get the point cloud data
     sensor_msgs::msg::PointCloud2 point_cloud_data = *msg2;
+    point_cloud_data.header.frame_id = msg2->header.frame_id;
+    point_cloud_data.header.stamp = msg2->header.stamp;
 
     // publish the imu data
     fused_imu_publisher_->publish(imu_data);

@@ -59,5 +59,7 @@ git clone https://github.com/dawonn/vectornav.git -b ros2
 ## 🏎️ Launcher
 ```bash
 ros2 launch global_navigation_launch lidar_subprocessing.launch.py
+ros2 launch robot_description display.launch.py
+ros2 launch global_navigation_launch lio_sam.launch.py
 ```
 
