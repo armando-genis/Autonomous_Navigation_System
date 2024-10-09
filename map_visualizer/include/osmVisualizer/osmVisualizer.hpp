@@ -16,6 +16,10 @@
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 #include <lanelet2_projection/LocalCartesian.h>
 
+#include <geometry_msgs/msg/polygon_stamped.hpp>
+#include <polygon_msgs/msg/polygon2_d_stamped.hpp>
+#include <polygon_msgs/msg/polygon2_d_collection.hpp>
+
 using namespace std::chrono_literals;
 
 class OsmVisualizer : public rclcpp::Node
@@ -35,9 +39,11 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr publisher_;
   rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr array_publisher_;
+  rclcpp::Publisher<polygon_msgs::msg::Polygon2DCollection>::SharedPtr polygon_publisher_;
 
   std_msgs::msg::Float64MultiArray m_array;
   visualization_msgs::msg::MarkerArray m_marker_array;
+  polygon_msgs::msg::Polygon2DCollection crosswalk_polygons;
 
   // params
   std::string map_path_;

@@ -23,6 +23,8 @@ sudo apt install ros-$ROS_DISTRO-xacro
 sudo apt install ros-$ROS_DISTRO-velodyne-msgs
 sudo apt install ros-$ROS_DISTRO-diagnostic-updater
 sudo apt install ros-$ROS_DISTRO-lanelet2
+sudo apt install ros-$ROS_DISTRO-color-util
+
 
 #GTSAM librari for LIO-SAM
 sudo add-apt-repository ppa:borglab/gtsam-release-4.1
@@ -53,6 +55,9 @@ cd ..
 
 # for the vectornav package
 git clone https://github.com/dawonn/vectornav.git -b ros2
+
+# for the polygon represetation in rviz2
+git clone https://github.com/MetroRobots/polygon_ros.git
 
 ```
 

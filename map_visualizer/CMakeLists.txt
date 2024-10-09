@@ -27,8 +27,9 @@ find_package(lanelet2_projection)
 find_package(lanelet2_routing)
 find_package(lanelet2_traffic_rules)
 find_package(lanelet2_validation)
+find_package(polygon_msgs REQUIRED)
 
-set(dep_osm "rclcpp" "visualization_msgs" "Eigen3" "lanelet2_core" "lanelet2_io" "lanelet2_maps" "lanelet2_validation" "lanelet2_routing" "lanelet2_projection" "lanelet2_traffic_rules")
+set(dep_osm "rclcpp" "visualization_msgs" "Eigen3" "lanelet2_core" "lanelet2_io" "lanelet2_maps" "lanelet2_validation" "lanelet2_routing" "lanelet2_projection" "lanelet2_traffic_rules" "polygon_msgs")
 
 include_directories(include())
 

@@ -13,12 +13,5 @@
         "/home/genis/personal/sdv_ws/install/lio_sam/local/lib/python3.10/dist-packages",
         "/opt/ros/humble/lib/python3.10/site-packages",
         "/opt/ros/humble/local/lib/python3.10/dist-packages"
-    ],
-    "cmake.sourceDirectory": "/home/genis/personal/sdv_ws/src/Autonomous_Navigation_System/LIO-SAM",
-    "files.associations": {
-        "*.ipp": "cpp",
-        "deque": "cpp",
-        "string": "cpp",
-        "vector": "cpp"
-    }
+    ]
 }

@@ -10,7 +10,7 @@ def generate_launch_description():
             output="screen",
             emulate_tty=True,
             parameters=[
-                {"map_path": "/home/genis/personal/ros2_ws/src/Lanelet2Maps_mty_test1.osm"}
+                {"map_path": "/home/genis/Downloads/lanelet2_mty.osm"}
             ]
         )
     ])

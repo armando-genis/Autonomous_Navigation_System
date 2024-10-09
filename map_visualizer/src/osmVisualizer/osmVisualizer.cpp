@@ -12,6 +12,8 @@ OsmVisualizer::OsmVisualizer() : Node("OsmVisualizer")
   array_publisher_ = this->create_publisher<std_msgs::msg::Float64MultiArray>("/array", 10);
   timer_ = this->create_wall_timer(500ms, std::bind(&OsmVisualizer::timer_callback, this));
 
+  polygon_publisher_ = this->create_publisher<polygon_msgs::msg::Polygon2DCollection>("/crosswalk_polygons", 10);
+
   // lanelet::LaneletMapPtr map = lanelet::load(map_path_, lanelet::projection::UtmProjector(lanelet::Origin({49.0, 8.0})));
 
   lanelet::Origin origin({49.0, 8.0});
@@ -53,11 +55,12 @@ bool OsmVisualizer::readParameters()
 
 void OsmVisualizer::timer_callback()
 {
-  // publisher_->get_subscription_count() > 0 && m_marker_array.markers.size() > 0
-  // if( publisher_->get_subscription_count() > 0)
+  publisher_->publish(m_marker_array);
+  array_publisher_->publish(m_array);
+  if (!crosswalk_polygons.polygons.empty())
   {
-    publisher_->publish(m_marker_array);
-    array_publisher_->publish(m_array);
+    polygon_publisher_->publish(crosswalk_polygons);
+    std::cout << "Published crosswalk polygons" << std::endl;
   }
 }
 
@@ -149,43 +152,86 @@ double OsmVisualizer::getDistance(const lanelet::ConstLanelet &ll, size_t i)
 
 void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
 {
+
   size_t i = 0;
+  int crosswalk_count = 0;             // Counter for crosswalk subtype
+  crosswalk_polygons.polygons.clear(); // Clear the crosswalk polygons
+
+  crosswalk_polygons.header.stamp = rclcpp::Clock{}.now();
+  crosswalk_polygons.header.frame_id = "map";
 
   // Iterate over the lanelets in the map
   for (const auto &ll : t_map->laneletLayer)
   {
+
     std::vector<lanelet::ConstLineString3d> bounds;
     bounds.push_back(ll.leftBound());
     bounds.push_back(ll.rightBound());
 
-    // For each bound (left and right), create a marker
-    for (const auto &bound : bounds)
+    // Check if the lanelet has the subtype 'crosswalk'
+    if (ll.hasAttribute(lanelet::AttributeName::Subtype) &&
+        ll.attribute(lanelet::AttributeName::Subtype).value() == lanelet::AttributeValueString::Crosswalk)
     {
-      visualization_msgs::msg::Marker marker;
-      marker.header.frame_id = "map";
-      marker.header.stamp = rclcpp::Clock{}.now();
-      marker.ns = "lanelet";
-      marker.id = i++;
-      marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
-      marker.action = visualization_msgs::msg::Marker::ADD;
-      marker.scale.x = 0.1;
-      marker.color.a = 1.0;
-      marker.color.r = 232;
-      marker.color.g = 44;
-      marker.color.b = 44;
+      crosswalk_count++; // Increment the crosswalk counter
+      // Create a Polygon2D for the crosswalk
+      polygon_msgs::msg::Polygon2D polygon;
 
-      // Add the points to the marker
-      for (const auto &point : bound)
+      // For the left bound
+      for (const auto &point : ll.leftBound())
       {
-        geometry_msgs::msg::Point p;
-        p.x = point.x();
+        polygon_msgs::msg::Point2D p;
+        p.x = point.x(); // Convert from lanelet point to polygon_msgs Point2D
         p.y = point.y();
-        p.z = 0;
-        marker.points.push_back(p);
+        polygon.points.push_back(p); // Add to the polygon's points
       }
 
-      // Add the marker to the array
-      m_marker_array.markers.push_back(marker);
+      // For the right bound
+      const auto &right_bound = ll.rightBound();
+      for (int i = right_bound.size() - 1; i >= 0; --i)
+      {
+        polygon_msgs::msg::Point2D p;
+        p.x = right_bound[i].x(); // Convert from lanelet point to polygon_msgs Point2D
+        p.y = right_bound[i].y();
+        polygon.points.push_back(p); // Add to the polygon's points
+      }
+
+      // close the loop by adding the first point to the end
+      polygon.points.push_back(polygon.points[0]);
+
+      crosswalk_polygons.polygons.push_back(polygon);
+    }
+    else
+    {
+      // For each bound (left and right), create a marker
+      for (const auto &bound : bounds)
+      {
+        visualization_msgs::msg::Marker marker;
+        marker.header.frame_id = "map";
+        marker.header.stamp = rclcpp::Clock{}.now();
+        marker.ns = "lanelet";
+        marker.id = i++;
+        marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
+        marker.action = visualization_msgs::msg::Marker::ADD;
+        marker.scale.x = 0.2;
+        marker.color.a = 1.0;
+        marker.color.r = 1.0;
+        marker.color.g = 1.0;
+        marker.color.b = 1.0;
+
+        // Add the points to the marker
+        for (const auto &point : bound)
+        {
+          geometry_msgs::msg::Point p;
+          p.x = point.x();
+          p.y = point.y();
+          // p.z = point.z();
+          marker.points.push_back(p);
+        }
+
+        // Add the marker to the array
+        m_marker_array.markers.push_back(marker);
+      }
     }
   }
+  std::cout << "----> Number of crosswalk lanelets: " << crosswalk_count << std::endl;
 }

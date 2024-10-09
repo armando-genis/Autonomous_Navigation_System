@@ -1,0 +1,36 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/genis/personal/sdv_ws/install/velodyne_pointcloud/include/**",
+        "/home/genis/personal/sdv_ws/install/velodyne_driver/include/**",
+        "/home/genis/personal/sdv_ws/install/velodyne_msgs/include/**",
+        "/home/genis/personal/sdv_ws/install/velodyne_laserscan/include/**",
+        "/home/genis/personal/sdv_ws/install/vectornav/include/**",
+        "/home/genis/personal/sdv_ws/install/vectornav_msgs/include/**",
+        "/home/genis/personal/sdv_ws/install/ndt_omp_ros2/include/**",
+        "/home/genis/personal/sdv_ws/install/lio_sam/include/**",
+        "/opt/ros/humble/include/**",
+        "/home/genis/personal/sdv_ws/src/Autonomous_Navigation_System/LIO-SAM/include/**",
+        "/home/genis/personal/sdv_ws/src/Autonomous_Navigation_System/lidar_localization_ros2/include/**",
+        "/home/genis/personal/sdv_ws/src/Autonomous_Navigation_System/map_visualizer/include/**",
+        "/home/genis/personal/sdv_ws/src/Autonomous_Navigation_System/ndt_omp_ros2/include/**",
+        "/home/genis/personal/sdv_ws/src/Autonomous_Navigation_System/pointcloud_rotation/include/**",
+        "/home/genis/personal/sdv_ws/src/Autonomous_Navigation_System/velodyne/velodyne_driver/include/**",
+        "/home/genis/personal/sdv_ws/src/Autonomous_Navigation_System/velodyne/velodyne_laserscan/include/**",
+        "/home/genis/personal/sdv_ws/src/Autonomous_Navigation_System/velodyne/velodyne_pointcloud/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}
