@@ -14,15 +14,17 @@ OsmVisualizer::OsmVisualizer() : Node("OsmVisualizer")
 
   polygon_publisher_ = this->create_publisher<polygon_msgs::msg::Polygon2DCollection>("/crosswalk_polygons", 10);
 
-  // lanelet::LaneletMapPtr map = lanelet::load(map_path_, lanelet::projection::UtmProjector(lanelet::Origin({49.0, 8.0})));
+  // Load the map
+  // lanelet::projection::UtmProjector projector(lanelet::Origin({49.0, 8.0}));
+
+  // // Load the map using the UTM projector
+  // lanelet::LaneletMapPtr map = lanelet::load(map_path_, projector);
 
   lanelet::Origin origin({49.0, 8.0});
   lanelet::projection::LocalCartesianProjector projector(origin);
-
-  // Load the map using the projector
   lanelet::LaneletMapPtr map = lanelet::load(map_path_, projector);
 
-  for (auto point : map->pointLayer)
+  for (auto &point : map->pointLayer)
   {
     point.x() = point.attribute("local_x").asDouble().value();
     point.y() = point.attribute("local_y").asDouble().value();
@@ -160,6 +162,18 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
   crosswalk_polygons.header.stamp = rclcpp::Clock{}.now();
   crosswalk_polygons.header.frame_id = "map";
 
+  std_msgs::msg::ColorRGBA color;
+  color.r = 0.6; // Red color
+  color.g = 0.6; // No green
+  color.b = 0.6; // No blue
+  color.a = 0.5; // Full opacity
+
+  crosswalk_polygons.colors.clear();
+  crosswalk_polygons.colors.push_back(color);
+
+  double base_polygon_z_offset = 0.0;   // Z-offset for the base crosswalk polygon
+  double stripe_polygon_z_offset = 0.1; // Z-offset for the zebra crossing stripes
+
   // Iterate over the lanelets in the map
   for (const auto &ll : t_map->laneletLayer)
   {
@@ -175,6 +189,7 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
       crosswalk_count++; // Increment the crosswalk counter
       // Create a Polygon2D for the crosswalk
       polygon_msgs::msg::Polygon2D polygon;
+      polygon.z_offset = 3.0;
 
       // For the left bound
       for (const auto &point : ll.leftBound())
@@ -198,7 +213,94 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
       // close the loop by adding the first point to the end
       polygon.points.push_back(polygon.points[0]);
 
-      crosswalk_polygons.polygons.push_back(polygon);
+      // crosswalk_polygons.polygons.push_back(polygon);
+
+      double max_z = std::numeric_limits<double>::lowest(); // Initialize to the lowest possible value
+      for (const auto &point : ll.leftBound())
+      {
+        // std::cout << "Point z: " << point.z() << std::endl; // Print each z value
+
+        if (point.z() > max_z)
+        {
+          max_z = point.z();
+        }
+      }
+
+      std::cout << "----->max_z set polygon: " << max_z << std::endl;
+
+      // Create zebra crossing stripes
+      int num_stripes = 9;         // Number of stripes
+      double stripe_spacing = 0.5; // Space between stripes
+      double initial_gap = 0.1;    // Initial separation (gap) before the first stripe
+
+      // For each stripe
+      for (int i = 0; i < num_stripes; i++)
+      {
+        double t = i / static_cast<double>(num_stripes); // Parameter for interpolation
+
+        // Interpolate between left and right bounds to create the stripe
+        polygon_msgs::msg::Point2D left_start, right_start, left_end, right_end;
+
+        // Calculate the direction of the edge (between the first and last points of the left bound)
+        double dx_left = ll.leftBound().back().x() - ll.leftBound()[0].x();
+        double dy_left = ll.leftBound().back().y() - ll.leftBound()[0].y();
+
+        // Normalize the direction vector for the left bound
+        double length_left = std::sqrt(dx_left * dx_left + dy_left * dy_left);
+        dx_left /= length_left;
+        dy_left /= length_left;
+
+        // Interpolate along the left bound
+        left_start.x = (1 - t) * ll.leftBound()[0].x() + t * ll.leftBound().back().x() + initial_gap * dx_left;
+        left_start.y = (1 - t) * ll.leftBound()[0].y() + t * ll.leftBound().back().y() + initial_gap * dy_left;
+
+        // Same for the right bound
+        double dx_right = ll.rightBound().back().x() - ll.rightBound()[0].x();
+        double dy_right = ll.rightBound().back().y() - ll.rightBound()[0].y();
+
+        double length_right = std::sqrt(dx_right * dx_right + dy_right * dy_right);
+        dx_right /= length_right;
+        dy_right /= length_right;
+
+        right_start.x = (1 - t) * ll.rightBound()[0].x() + t * ll.rightBound().back().x() + initial_gap * dx_right;
+        right_start.y = (1 - t) * ll.rightBound()[0].y() + t * ll.rightBound().back().y() + initial_gap * dy_right;
+
+        // Create the stripe end points based on the stripe width
+        left_end.x = left_start.x + stripe_spacing * dx_left;
+        left_end.y = left_start.y + stripe_spacing * dy_left;
+
+        right_end.x = right_start.x + stripe_spacing * dx_right;
+        right_end.y = right_start.y + stripe_spacing * dy_right;
+
+        // Create a stripe polygon
+        polygon_msgs::msg::Polygon2D stripe_polygon;
+        stripe_polygon.z_offset = max_z; // set the ele value of the polygon to the min z value of the lanelet
+
+        stripe_polygon.points.push_back(left_start);
+        stripe_polygon.points.push_back(right_start);
+        stripe_polygon.points.push_back(right_end);
+        stripe_polygon.points.push_back(left_end);
+        stripe_polygon.points.push_back(left_start); // Close the loop
+
+        // Alternate between white and gray stripes
+        std_msgs::msg::ColorRGBA stripe_color;
+        stripe_color.r = 1.0;
+        stripe_color.g = 1.0;
+        stripe_color.b = 1.0;
+        stripe_color.a = 0.8; // Slightly opaque
+
+        // Add the stripe polygon to the crosswalk polygons
+        crosswalk_polygons.polygons.push_back(stripe_polygon);
+
+        // Add the stripe color to the colors list
+        crosswalk_polygons.colors.push_back(stripe_color);
+      }
+
+      // for to cout the z_offset of the polygon
+      for (size_t i = 0; i < crosswalk_polygons.polygons.size(); i++)
+      {
+        std::cout << "----->z_offset set polygon: " << crosswalk_polygons.polygons[i].z_offset << std::endl;
+      }
     }
     else
     {
@@ -224,7 +326,7 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
           geometry_msgs::msg::Point p;
           p.x = point.x();
           p.y = point.y();
-          // p.z = point.z();
+          p.z = point.z();
           marker.points.push_back(p);
         }
 

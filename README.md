@@ -11,6 +11,10 @@ sudo apt-get install libpcap-dev
 sudo apt install can-utils
 sudo apt-get install libqt5serialport5-dev
 
+sudo apt-get install libpugixml-dev
+sudo apt-get install libgeographic-dev geographiclib-tools
+
+
 #ros2 packages
 sudo apt install ros-$ROS_DISTRO-joint-state-publisher-gui
 sudo apt install ros-$ROS_DISTRO-xacro
@@ -22,7 +26,7 @@ sudo apt install ros-$ROS_DISTRO-vision-opencv
 sudo apt install ros-$ROS_DISTRO-xacro
 sudo apt install ros-$ROS_DISTRO-velodyne-msgs
 sudo apt install ros-$ROS_DISTRO-diagnostic-updater
-sudo apt install ros-$ROS_DISTRO-lanelet2
+#sudo apt install ros-$ROS_DISTRO-lanelet2
 sudo apt install ros-$ROS_DISTRO-color-util
 
 
@@ -59,6 +63,8 @@ git clone https://github.com/dawonn/vectornav.git -b ros2
 # for the polygon represetation in rviz2
 git clone https://github.com/MetroRobots/polygon_ros.git
 
+git clone https://github.com/KIT-MRT/mrt_cmake_modules.git
+
 ```
 
 ## 🏎️ Launcher
@@ -68,3 +74,44 @@ ros2 launch robot_description display.launch.py
 ros2 launch global_navigation_launch lio_sam.launch.py
 ```
 
+
+
+## changes:
+In the file called /lanelet2_projection/LocalCartesian.cpp i change the to this when using localcartesian map type in orden to get the ele attribute from the oms correctly and not modify. 
+
+```bash
+BasicPoint3d LocalCartesianProjector::forward(const GPSPoint& gps) const {
+  BasicPoint3d local{0., 0., 0.};
+  this->localCartesian_.Forward(gps.lat, gps.lon, gps.ele, local[0], local[1], local[2]);
+  local[2] = gps.ele;
+  return local;
+}
+```
+
+also wacht that in the "lanelet2_io/io_handlers/OsmFile.cpp" this is in the code:
+
+```bash
+  static Nodes readNodes(const pugi::xml_node& osmNode) {
+    Nodes nodes;
+    for (auto node = osmNode.child(keyword::Node); node;  // NOLINT
+         node = node.next_sibling(keyword::Node)) {
+      if (isDeleted(node)) {
+        continue;
+      }
+      const auto id = node.attribute(keyword::Id).as_llong(InvalId);
+      const auto attributes = tags(node);
+      const auto lat = node.attribute(keyword::Lat).as_double(0.);
+      const auto lon = node.attribute(keyword::Lon).as_double(0.);
+      // const auto ele = node.attribute(keyword::Elevation).as_double(0.);
+
+      const auto ele = node.find_child_by_attribute(keyword::Tag, keyword::Key, keyword::Elevation)
+                           .attribute(keyword::Value)
+                           .as_double(0.);
+
+      // std::cout << "ele: " << ele << std::endl;
+
+      nodes[id] = Node{id, attributes, {lat, lon, ele}};
+    }
+    return nodes;
+  }
+```
