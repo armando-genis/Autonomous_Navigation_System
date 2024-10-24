@@ -67,6 +67,26 @@ git clone https://github.com/dawonn/vectornav.git -b ros2
 git clone https://github.com/KIT-MRT/mrt_cmake_modules.git
 
 ```
+
+## 📥 Building
+If it is the fist time you build the workspace follow the next commands to do not crash your computer. 
+ ```bash
+colcon build --packages-select lio_sam
+colcon build --packages-select ndt_omp_ros2
+colcon build --packages-select lidar_localization_ros2
+colcon build --packages-select vectornav_msgs
+colcon build --packages-select vectornav
+colcon build --packages-select velodyne_msgs
+colcon build --packages-select velodyne_driver
+colcon build --packages-select velodyne_laserscan
+colcon build --packages-select velodyne_pointcloud
+colcon build --packages-select velodyne
+colcon build --packages-select lidar_imu_sync
+colcon build --packages-select mapping_localization_launch
+colcon build --packages-select polygon_msgs
+colcon build
+```
+
 ## 🏅 lidar config 
 `sudo ifconfig enp2s0 10.66.171.101`
 
@@ -96,7 +116,7 @@ ros2 launch global_navigation_launch lidar_localization_ros2.launch.py
 
 ## 🛑 changes:
 
-# - Lanelet changes
+### - Lanelet changes
 In the file called /lanelet2_projection/LocalCartesian.cpp I change the to this when using localcartesian map type in orden to get the ele attribute from the oms correctly and not modify. 
 
 ```bash
@@ -136,4 +156,4 @@ also wacht that in the "lanelet2_io/io_handlers/OsmFile.cpp" this is in the code
   }
 ```
 
-# - Polygon ros changes: 
+### - Polygon ros changes: 
