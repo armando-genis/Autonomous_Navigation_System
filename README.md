@@ -26,7 +26,7 @@ sudo apt install ros-$ROS_DISTRO-vision-opencv
 sudo apt install ros-$ROS_DISTRO-xacro
 sudo apt install ros-$ROS_DISTRO-velodyne-msgs
 sudo apt install ros-$ROS_DISTRO-diagnostic-updater
-#sudo apt install ros-$ROS_DISTRO-lanelet2
+#sudo apt install ros-$ROS_DISTRO-lanelet2 (no longer required because in the repo is a custom repo)
 sudo apt install ros-$ROS_DISTRO-color-util
 
 
@@ -60,24 +60,44 @@ cd ..
 # for the vectornav package
 git clone https://github.com/dawonn/vectornav.git -b ros2
 
-# for the polygon represetation in rviz2
-git clone https://github.com/MetroRobots/polygon_ros.git
+# for the polygon represetation in rviz2 (NO LONGER REQUIERD)
+# git clone https://github.com/MetroRobots/polygon_ros.git
+
 
 git clone https://github.com/KIT-MRT/mrt_cmake_modules.git
 
 ```
+## 🏅 lidar config 
+`sudo ifconfig enp2s0 10.66.171.101`
 
-## 🏎️ Launcher
+## 🏅 IMU Permistion
+`sudo chmod 666 /dev/ttyUSB0`
+
+## 💡 Sensor Launcher 
+```bash
+ros2 launch sensors_launch velodyne-VLP32C-launch.py #for lidar only
+ros2 launch sensors_launch vectornav.launch.py #for IMU
+ros2 launch sensors_launch lidar&imu.launch.py #for Imu and lidar 
+```
+
+## 🌏 Launcher for mapping
 ```bash
 ros2 launch global_navigation_launch lidar_subprocessing.launch.py
 ros2 launch robot_description display.launch.py
 ros2 launch global_navigation_launch lio_sam.launch.py
 ```
 
+## 🛰️ Launcher for Localization
+```bash
+ros2 launch global_navigation_launch lidar_subprocessing.launch.py
+ros2 launch robot_description localization_display.launch.py
+ros2 launch global_navigation_launch lidar_localization_ros2.launch.py
+```
 
+## 🛑 changes:
 
-## changes:
-In the file called /lanelet2_projection/LocalCartesian.cpp i change the to this when using localcartesian map type in orden to get the ele attribute from the oms correctly and not modify. 
+# - Lanelet changes
+In the file called /lanelet2_projection/LocalCartesian.cpp I change the to this when using localcartesian map type in orden to get the ele attribute from the oms correctly and not modify. 
 
 ```bash
 BasicPoint3d LocalCartesianProjector::forward(const GPSPoint& gps) const {
@@ -115,3 +135,5 @@ also wacht that in the "lanelet2_io/io_handlers/OsmFile.cpp" this is in the code
     return nodes;
   }
 ```
+
+# - Polygon ros changes: 
