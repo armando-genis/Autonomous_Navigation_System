@@ -25,8 +25,13 @@
 #include <lanelet2_core/primitives/Lanelet.h>
 
 #include <lanelet2_traffic_rules/TrafficRules.h>
+#include <boost/optional/optional_io.hpp>
+
+// we want assert statements to work in release mode
+#undef NDEBUG
 
 using namespace std::chrono_literals;
+using namespace lanelet;
 
 class OsmVisualizer : public rclcpp::Node
 {

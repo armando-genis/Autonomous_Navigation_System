@@ -16,15 +16,10 @@ OsmVisualizer::OsmVisualizer() : Node("OsmVisualizer")
 
   waypoints_publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("/waypoints", 10);
 
-  // Load the map
-  // lanelet::projection::UtmProjector projector(lanelet::Origin({49.0, 8.0}));
-
-  // // Load the map using the UTM projector
-  // lanelet::LaneletMapPtr map = lanelet::load(map_path_, projector);
-
-  lanelet::Origin origin({49.0, 8.0});
+  lanelet::Origin origin({49, 8.4});
   lanelet::projection::LocalCartesianProjector projector(origin);
   lanelet::LaneletMapPtr map = lanelet::load(map_path_, projector);
+  // LaneletMapPtr map = load(map_path_, projection::UtmProjector(Origin({49, 8.4})));
 
   for (auto &point : map->pointLayer)
   {
@@ -35,6 +30,8 @@ OsmVisualizer::OsmVisualizer() : Node("OsmVisualizer")
   fill_marker(map);
   fill_array_with_left_right(map);
   // writeToFile(m_array);
+
+  // routing graph
   lanelet_routing_test(map);
 }
 
@@ -226,7 +223,7 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
 
       base_polygon.z_offset = max_z;
 
-      // crosswalk_polygons.polygons.push_back(base_polygon);
+      crosswalk_polygons.polygons.push_back(base_polygon);
 
       // =================================================================================================
       // stripe polygons
@@ -350,7 +347,7 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
           crosswalk_polygons.colors.push_back(stripe_color);
 
           stripe_polygon.points.push_back(stripe_polygon.points[0]);
-          crosswalk_polygons.polygons.push_back(stripe_polygon);
+          // crosswalk_polygons.polygons.push_back(stripe_polygon);
         }
       }
     }
@@ -393,112 +390,78 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
 
 void OsmVisualizer::lanelet_routing_test(lanelet::LaneletMapPtr &map)
 {
-  // Create traffic rules and routing graph
-  auto trafficRules = lanelet::traffic_rules::TrafficRulesFactory::create(
-      lanelet::Locations::Germany, lanelet::Participants::Vehicle);
+  traffic_rules::TrafficRulesPtr trafficRules =
+      traffic_rules::TrafficRulesFactory::create(Locations::Germany, Participants::Vehicle);
 
-  // Add a routing cost module with parameters for laneChangeCost and minLaneChangeLength
-  double laneChangeCost = 10.0;     // Example cost for lane changes
-  double minLaneChangeLength = 5.0; // Example minimum lane change length
-  lanelet::routing::RoutingCostPtrs routingCosts = {std::make_shared<lanelet::routing::RoutingCostDistance>(laneChangeCost, minLaneChangeLength)};
-
-  // Build the routing graph with the specified routing costs
-  lanelet::routing::RoutingGraphPtr routingGraph = lanelet::routing::RoutingGraph::build(*map, *trafficRules, routingCosts);
+  routing::RoutingGraphUPtr routingGraph = routing::RoutingGraph::build(*map, *trafficRules);
 
   if (routingGraph)
   {
-    const auto &lanelets = map->laneletLayer;
+    std::cout << green << "Routing graph built successfully" << reset << std::endl;
 
-    // Retrieve start and goal lanelets by ID
-    lanelet::ConstLanelet startLanelet = map->laneletLayer.get(77);
-    lanelet::ConstLanelet goalLanelet = map->laneletLayer.get(512);
+    lanelet::ConstLanelet startLanelet = map->laneletLayer.get(7);
+    lanelet::ConstLanelet endLanelet = map->laneletLayer.get(56);
 
-    visualization_msgs::msg::MarkerArray graph_waypoint_markers;
-    int waypoint_id = 0;
+    // Check if the goal lanelet is reachable from the start lanelet
+    double maxRoutingCost = 500.0;
+    auto reachableSet = routingGraph->reachableSet(startLanelet, maxRoutingCost);
+    bool isReachable = std::find_if(reachableSet.begin(), reachableSet.end(),
+                                    [&](const lanelet::ConstLanelet &ll)
+                                    { return ll.id() == endLanelet.id(); }) != reachableSet.end();
 
-    // Iterate over all lanelets in the map to extract all waypoints in the graph
-    for (const auto &lanelet : lanelets)
+    // cout isReachabl in blue
+    if (!isReachable)
     {
-      for (const auto &point : lanelet.centerline2d())
-      {
-        visualization_msgs::msg::Marker waypoint_marker;
-        waypoint_marker.header.frame_id = "map";
-        waypoint_marker.header.stamp = rclcpp::Clock{}.now();
-        waypoint_marker.ns = "graph_waypoints";
-        waypoint_marker.id = waypoint_id++;
-        waypoint_marker.type = visualization_msgs::msg::Marker::SPHERE;
-        waypoint_marker.action = visualization_msgs::msg::Marker::ADD;
-
-        waypoint_marker.color.a = 1.0;
-
-        // Set color based on whether the point belongs to the start or goal lanelet
-        if (lanelet.id() == startLanelet.id())
-        {
-          // Red color for start and goal nodes
-          waypoint_marker.scale.x = 1.7;
-          waypoint_marker.scale.y = 1.7;
-          waypoint_marker.scale.z = 1.7;
-          waypoint_marker.color.r = 1.0;
-          waypoint_marker.color.g = 0.0;
-          waypoint_marker.color.b = 0.0;
-
-          std::cout << yellow << "----> Lanelet ID: " << blue << lanelet.id() << reset << std::endl;
-        }
-        else if (lanelet.id() == goalLanelet.id())
-        {
-          // Green color for other nodes
-          waypoint_marker.scale.x = 1.7;
-          waypoint_marker.scale.y = 1.7;
-          waypoint_marker.scale.z = 1.7;
-          waypoint_marker.color.r = 0.0;
-          waypoint_marker.color.g = 1.0;
-          waypoint_marker.color.b = 0.0;
-
-          std::cout << green << "----> Lanelet ID: " << blue << lanelet.id() << reset << std::endl;
-        }
-        else
-        {
-          // Blue color for other nodes
-          waypoint_marker.scale.x = 1.0;
-          waypoint_marker.scale.y = 1.0;
-          waypoint_marker.scale.z = 1.0;
-          waypoint_marker.color.r = 0.0;
-          waypoint_marker.color.g = 0.0;
-          waypoint_marker.color.b = 1.0;
-
-          std::cout << blue << "----> Lanelet ID: " << blue << lanelet.id() << reset << std::endl;
-        }
-
-        // Set the position for the waypoint
-        waypoint_marker.pose.position.x = point.x();
-        waypoint_marker.pose.position.y = point.y();
-        waypoint_marker.pose.position.z = 0.0;
-
-        // Add the marker to the marker array
-        graph_waypoint_markers.markers.push_back(waypoint_marker);
-      }
-    }
-
-    // Publish the complete graph's waypoints as a MarkerArray
-    waypoints_publisher_->publish(graph_waypoint_markers);
-
-    // Find the shortest path between the start and goal lanelets
-    auto route = routingGraph->getRoute(startLanelet, goalLanelet);
-    if (route)
-    {
-      std::cout << "Route found with " << route->shortestPath().size() << " lanelets." << std::endl;
-      for (const auto &lanelet : route->shortestPath())
-      {
-        std::cout << "Lanelet ID: " << lanelet.id() << std::endl;
-      }
+      std::cout << red << "Goal lanelet is not reachable from the start lanelet." << reset << std::endl;
     }
     else
     {
-      RCLCPP_WARN(this->get_logger(), "No route found between start and goal lanelets.");
+      std::cout << green << "Goal lanelet is reachable from the start lanelet." << reset << std::endl;
+      Optional<routing::Route> route = routingGraph->getRoute(startLanelet, endLanelet, 0);
+      if (route)
+      {
+        std::cout << green << "Route found" << reset << std::endl;
+
+        // provides the shortest path between the startLanelet and endLanelet within the route.
+        routing::LaneletPath shortestPath = route->shortestPath();
+        visualization_msgs::msg::MarkerArray graph_waypoint_markers;
+        int waypoint_id = 0;
+        for (const auto &lanelet : shortestPath)
+        {
+          for (const auto &point : lanelet.centerline2d())
+          {
+            visualization_msgs::msg::Marker waypoint_marker;
+            waypoint_marker.header.frame_id = "map";
+            waypoint_marker.header.stamp = rclcpp::Clock{}.now();
+            waypoint_marker.ns = "graph_waypoints";
+            waypoint_marker.id = waypoint_id++;
+            waypoint_marker.type = visualization_msgs::msg::Marker::SPHERE;
+            waypoint_marker.action = visualization_msgs::msg::Marker::ADD;
+
+            waypoint_marker.color.a = 1.0;
+
+            // Blue color for other nodes
+            waypoint_marker.scale.x = 1.0;
+            waypoint_marker.scale.y = 1.0;
+            waypoint_marker.scale.z = 1.0;
+            waypoint_marker.color.r = 0.0;
+            waypoint_marker.color.g = 0.0;
+            waypoint_marker.color.b = 1.0;
+
+            // Set the position for the waypoint
+            waypoint_marker.pose.position.x = point.x();
+            waypoint_marker.pose.position.y = point.y();
+            waypoint_marker.pose.position.z = 0.0;
+
+            // Add the marker to the marker array
+            graph_waypoint_markers.markers.push_back(waypoint_marker);
+          }
+        }
+        waypoints_publisher_->publish(graph_waypoint_markers);
+
+        // returns the entire sequence of connected lanelets within the same lane as startLanelet.
+        LaneletSequence fullLane = route->fullLane(startLanelet);
+      }
     }
-  }
-  else
-  {
-    RCLCPP_ERROR(this->get_logger(), "Failed to create RoutingGraph");
   }
 }
