@@ -1,0 +1,23 @@
+{
+    "ros.distro": "humble",
+    "python.autoComplete.extraPaths": [
+        "/home/genis/Desktop/sdv_ws/install/velodyne_msgs/local/lib/python3.10/dist-packages",
+        "/home/genis/Desktop/sdv_ws/install/vectornav_msgs/local/lib/python3.10/dist-packages",
+        "/home/genis/Desktop/sdv_ws/install/polygon_utils/local/lib/python3.10/dist-packages",
+        "/home/genis/Desktop/sdv_ws/install/polygon_msgs/local/lib/python3.10/dist-packages",
+        "/home/genis/Desktop/sdv_ws/install/lanelet2_python/lib/python3.10/site-packages",
+        "/home/genis/Desktop/sdv_ws/install/lio_sam/local/lib/python3.10/dist-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/genis/Desktop/sdv_ws/install/velodyne_msgs/local/lib/python3.10/dist-packages",
+        "/home/genis/Desktop/sdv_ws/install/vectornav_msgs/local/lib/python3.10/dist-packages",
+        "/home/genis/Desktop/sdv_ws/install/polygon_utils/local/lib/python3.10/dist-packages",
+        "/home/genis/Desktop/sdv_ws/install/polygon_msgs/local/lib/python3.10/dist-packages",
+        "/home/genis/Desktop/sdv_ws/install/lanelet2_python/lib/python3.10/site-packages",
+        "/home/genis/Desktop/sdv_ws/install/lio_sam/local/lib/python3.10/dist-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ]
+}

@@ -9,6 +9,16 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(visualization_msgs REQUIRED)
+find_package(eigen3_cmake_module REQUIRED)
+find_package(Eigen3)
+find_package(lanelet2_core)
+find_package(lanelet2_io)
+find_package(lanelet2_maps)
+find_package(lanelet2_projection)
+find_package(lanelet2_routing)
+find_package(lanelet2_traffic_rules)
+find_package(lanelet2_validation)
+find_package(polygon_msgs REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -21,5 +31,47 @@ if(BUILD_TESTING)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
+
+add_executable(waypoints_routing_node src/waypoints_routing.cpp)
+
+ament_target_dependencies(waypoints_routing_node
+  rclcpp
+  visualization_msgs
+  Eigen3
+  lanelet2_core
+  lanelet2_io
+  lanelet2_maps
+  lanelet2_projection
+  lanelet2_routing
+  lanelet2_traffic_rules
+  lanelet2_validation
+  polygon_msgs
+)
+
+target_include_directories(waypoints_routing_node PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+
+# Install header files
+install(
+  DIRECTORY include/
+  DESTINATION include/
+)
+
+# Install executables and libraries
+install(TARGETS
+  waypoints_routing_node
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+# Install launch files and src files
+install(
+  DIRECTORY launch src config
+  DESTINATION share/${PROJECT_NAME}
+)
+
+message(=============================================================)
+message("-- ROS Found. ROS Support is turned ON.")
+message(=============================================================)
 
 ament_package()

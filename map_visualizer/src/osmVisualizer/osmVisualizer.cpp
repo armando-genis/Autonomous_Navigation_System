@@ -29,10 +29,6 @@ OsmVisualizer::OsmVisualizer() : Node("OsmVisualizer")
 
   fill_marker(map);
   fill_array_with_left_right(map);
-  // writeToFile(m_array);
-
-  // routing graph
-  lanelet_routing_test(map);
 }
 
 bool OsmVisualizer::readParameters()
@@ -210,12 +206,12 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
       }
 
       // For the right bound
-
-      for (const auto &point : ll.rightBound())
+      const auto &right_bound = ll.rightBound();
+      for (int i = right_bound.size() - 1; i >= 0; --i)
       {
         polygon_msgs::msg::Point2D p;
-        p.x = point.x(); // Convert from lanelet point to polygon_msgs Point2D
-        p.y = point.y();
+        p.x = right_bound[i].x(); // Convert from lanelet point to polygon_msgs Point2D
+        p.y = right_bound[i].y();
         base_polygon.points.push_back(p); // Add to the polygon's points
       }
 
@@ -223,7 +219,7 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
 
       base_polygon.z_offset = max_z;
 
-      crosswalk_polygons.polygons.push_back(base_polygon);
+      // crosswalk_polygons.polygons.push_back(base_polygon);
 
       // =================================================================================================
       // stripe polygons
@@ -253,7 +249,7 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
       for (int stripe_idx = 0; stripe_idx < num_stripes; ++stripe_idx)
       {
         polygon_msgs::msg::Polygon2D stripe_polygon;
-        stripe_polygon.z_offset = max_z + stripe_polygon_z_offset;
+        stripe_polygon.z_offset = max_z;
 
         // Calculate the start and end points for the current stripe on the left and right bounds
         double start_dist = stripe_idx * 2 * stripe_length;
@@ -301,25 +297,25 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
         polygon_msgs::msg::Point2D start_right, end_right;
         bool start_right_set = false, end_right_set = false;
 
-        for (size_t i = ll.rightBound().size() - 1; i > 0; --i)
+        for (size_t i = 0; i < ll.rightBound().size() - 1; ++i)
         {
           double segment_length = std::sqrt(
-              std::pow(ll.rightBound()[i].x() - ll.rightBound()[i - 1].x(), 2) +
-              std::pow(ll.rightBound()[i].y() - ll.rightBound()[i - 1].y(), 2));
+              std::pow(ll.rightBound()[i + 1].x() - ll.rightBound()[i].x(), 2) +
+              std::pow(ll.rightBound()[i + 1].y() - ll.rightBound()[i].y(), 2));
 
           if (accumulated_length + segment_length > start_dist && !start_right_set)
           {
             double ratio = (start_dist - accumulated_length) / segment_length;
-            start_right.x = ll.rightBound()[i].x() + ratio * (ll.rightBound()[i - 1].x() - ll.rightBound()[i].x());
-            start_right.y = ll.rightBound()[i].y() + ratio * (ll.rightBound()[i - 1].y() - ll.rightBound()[i].y());
+            start_right.x = ll.rightBound()[i].x() + ratio * (ll.rightBound()[i + 1].x() - ll.rightBound()[i].x());
+            start_right.y = ll.rightBound()[i].y() + ratio * (ll.rightBound()[i + 1].y() - ll.rightBound()[i].y());
             start_right_set = true;
           }
 
           if (accumulated_length + segment_length > end_dist && !end_right_set)
           {
             double ratio = (end_dist - accumulated_length) / segment_length;
-            end_right.x = ll.rightBound()[i].x() + ratio * (ll.rightBound()[i - 1].x() - ll.rightBound()[i].x());
-            end_right.y = ll.rightBound()[i].y() + ratio * (ll.rightBound()[i - 1].y() - ll.rightBound()[i].y());
+            end_right.x = ll.rightBound()[i].x() + ratio * (ll.rightBound()[i + 1].x() - ll.rightBound()[i].x());
+            end_right.y = ll.rightBound()[i].y() + ratio * (ll.rightBound()[i + 1].y() - ll.rightBound()[i].y());
             end_right_set = true;
             break;
           }
@@ -347,7 +343,7 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
           crosswalk_polygons.colors.push_back(stripe_color);
 
           stripe_polygon.points.push_back(stripe_polygon.points[0]);
-          // crosswalk_polygons.polygons.push_back(stripe_polygon);
+          crosswalk_polygons.polygons.push_back(stripe_polygon);
         }
       }
     }
@@ -386,82 +382,4 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
     }
   }
   std::cout << "----> Number of crosswalk lanelets: " << crosswalk_count << std::endl;
-}
-
-void OsmVisualizer::lanelet_routing_test(lanelet::LaneletMapPtr &map)
-{
-  traffic_rules::TrafficRulesPtr trafficRules =
-      traffic_rules::TrafficRulesFactory::create(Locations::Germany, Participants::Vehicle);
-
-  routing::RoutingGraphUPtr routingGraph = routing::RoutingGraph::build(*map, *trafficRules);
-
-  if (routingGraph)
-  {
-    std::cout << green << "Routing graph built successfully" << reset << std::endl;
-
-    lanelet::ConstLanelet startLanelet = map->laneletLayer.get(7);
-    lanelet::ConstLanelet endLanelet = map->laneletLayer.get(56);
-
-    // Check if the goal lanelet is reachable from the start lanelet
-    double maxRoutingCost = 500.0;
-    auto reachableSet = routingGraph->reachableSet(startLanelet, maxRoutingCost);
-    bool isReachable = std::find_if(reachableSet.begin(), reachableSet.end(),
-                                    [&](const lanelet::ConstLanelet &ll)
-                                    { return ll.id() == endLanelet.id(); }) != reachableSet.end();
-
-    // cout isReachabl in blue
-    if (!isReachable)
-    {
-      std::cout << red << "Goal lanelet is not reachable from the start lanelet." << reset << std::endl;
-    }
-    else
-    {
-      std::cout << green << "Goal lanelet is reachable from the start lanelet." << reset << std::endl;
-      Optional<routing::Route> route = routingGraph->getRoute(startLanelet, endLanelet, 0);
-      if (route)
-      {
-        std::cout << green << "Route found" << reset << std::endl;
-
-        // provides the shortest path between the startLanelet and endLanelet within the route.
-        routing::LaneletPath shortestPath = route->shortestPath();
-        visualization_msgs::msg::MarkerArray graph_waypoint_markers;
-        int waypoint_id = 0;
-        for (const auto &lanelet : shortestPath)
-        {
-          for (const auto &point : lanelet.centerline2d())
-          {
-            visualization_msgs::msg::Marker waypoint_marker;
-            waypoint_marker.header.frame_id = "map";
-            waypoint_marker.header.stamp = rclcpp::Clock{}.now();
-            waypoint_marker.ns = "graph_waypoints";
-            waypoint_marker.id = waypoint_id++;
-            waypoint_marker.type = visualization_msgs::msg::Marker::SPHERE;
-            waypoint_marker.action = visualization_msgs::msg::Marker::ADD;
-
-            waypoint_marker.color.a = 1.0;
-
-            // Blue color for other nodes
-            waypoint_marker.scale.x = 1.0;
-            waypoint_marker.scale.y = 1.0;
-            waypoint_marker.scale.z = 1.0;
-            waypoint_marker.color.r = 0.0;
-            waypoint_marker.color.g = 0.0;
-            waypoint_marker.color.b = 1.0;
-
-            // Set the position for the waypoint
-            waypoint_marker.pose.position.x = point.x();
-            waypoint_marker.pose.position.y = point.y();
-            waypoint_marker.pose.position.z = 0.0;
-
-            // Add the marker to the marker array
-            graph_waypoint_markers.markers.push_back(waypoint_marker);
-          }
-        }
-        waypoints_publisher_->publish(graph_waypoint_markers);
-
-        // returns the entire sequence of connected lanelets within the same lane as startLanelet.
-        LaneletSequence fullLane = route->fullLane(startLanelet);
-      }
-    }
-  }
 }

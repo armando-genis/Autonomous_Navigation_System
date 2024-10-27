@@ -45,10 +45,7 @@ private:
   void fill_marker(lanelet::LaneletMapPtr &t_map);
   void fill_array(lanelet::LaneletMapPtr &t_map);
   void fill_array_with_left_right(lanelet::LaneletMapPtr &t_map);
-  void fill_min_max_values(const lanelet::Lanelet &li);
   double getDistance(const lanelet::ConstLanelet &ll, size_t i);
-
-  void lanelet_routing_test(lanelet::LaneletMapPtr &map);
 
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr publisher_;

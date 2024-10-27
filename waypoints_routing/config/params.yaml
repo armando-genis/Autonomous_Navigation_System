@@ -1,0 +1,3 @@
+waypoints_routing_node:
+  ros__parameters:
+    map_path: "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/map_visualizer/osms/mty_map_full_2.osm"
