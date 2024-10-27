@@ -20,6 +20,12 @@
 #include <polygon_msgs/msg/polygon2_d_stamped.hpp>
 #include <polygon_msgs/msg/polygon2_d_collection.hpp>
 
+#include <lanelet2_core/geometry/Point.h>
+
+#include <lanelet2_core/primitives/Lanelet.h>
+
+#include <lanelet2_traffic_rules/TrafficRules.h>
+
 using namespace std::chrono_literals;
 
 class OsmVisualizer : public rclcpp::Node
@@ -36,14 +42,26 @@ private:
   void fill_array_with_left_right(lanelet::LaneletMapPtr &t_map);
   void fill_min_max_values(const lanelet::Lanelet &li);
   double getDistance(const lanelet::ConstLanelet &ll, size_t i);
+
+  void lanelet_routing_test(lanelet::LaneletMapPtr &map);
+
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr publisher_;
   rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr array_publisher_;
   rclcpp::Publisher<polygon_msgs::msg::Polygon2DCollection>::SharedPtr polygon_publisher_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr waypoints_publisher_;
 
   std_msgs::msg::Float64MultiArray m_array;
   visualization_msgs::msg::MarkerArray m_marker_array;
   polygon_msgs::msg::Polygon2DCollection crosswalk_polygons;
+
+  // colors for the terminal
+  std::string green = "\033[1;32m";
+  std::string red = "\033[1;31m";
+  std::string blue = "\033[1;34m";
+  std::string yellow = "\033[1;33m";
+  std::string purple = "\033[1;35m";
+  std::string reset = "\033[0m";
 
   // params
   std::string map_path_;

@@ -1,0 +1,62 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/genis/Desktop/sdv_ws/install/velodyne_pointcloud/include/**",
+        "/home/genis/Desktop/sdv_ws/install/velodyne_driver/include/**",
+        "/home/genis/Desktop/sdv_ws/install/velodyne_msgs/include/**",
+        "/home/genis/Desktop/sdv_ws/install/velodyne_laserscan/include/**",
+        "/home/genis/Desktop/sdv_ws/install/vectornav/include/**",
+        "/home/genis/Desktop/sdv_ws/install/vectornav_msgs/include/**",
+        "/home/genis/Desktop/sdv_ws/install/polygon_rviz_plugins/include/**",
+        "/home/genis/Desktop/sdv_ws/install/polygon_utils/include/**",
+        "/home/genis/Desktop/sdv_ws/install/polygon_msgs/include/**",
+        "/home/genis/Desktop/sdv_ws/install/ndt_omp_ros2/include/**",
+        "/home/genis/Desktop/sdv_ws/install/lanelet2_validation/include/**",
+        "/home/genis/Desktop/sdv_ws/install/lanelet2_examples/include/**",
+        "/home/genis/Desktop/sdv_ws/install/lanelet2_python/include/**",
+        "/home/genis/Desktop/sdv_ws/install/lanelet2_routing/include/**",
+        "/home/genis/Desktop/sdv_ws/install/lanelet2_matching/include/**",
+        "/home/genis/Desktop/sdv_ws/install/lanelet2_traffic_rules/include/**",
+        "/home/genis/Desktop/sdv_ws/install/lanelet2_projection/include/**",
+        "/home/genis/Desktop/sdv_ws/install/lanelet2_maps/include/**",
+        "/home/genis/Desktop/sdv_ws/install/lanelet2_io/include/**",
+        "/home/genis/Desktop/sdv_ws/install/lanelet2_core/include/**",
+        "/home/genis/Desktop/sdv_ws/install/lio_sam/include/**",
+        "/opt/ros/humble/include/**",
+        "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/LIO-SAM/include/**",
+        "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/Lanelet2/lanelet2_core/include/**",
+        "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/Lanelet2/lanelet2_examples/include/**",
+        "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/Lanelet2/lanelet2_io/include/**",
+        "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/Lanelet2/lanelet2_maps/include/**",
+        "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/Lanelet2/lanelet2_matching/include/**",
+        "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/Lanelet2/lanelet2_projection/include/**",
+        "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/Lanelet2/lanelet2_python/include/**",
+        "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/Lanelet2/lanelet2_routing/include/**",
+        "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/Lanelet2/lanelet2_traffic_rules/include/**",
+        "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/Lanelet2/lanelet2_validation/include/**",
+        "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/lidar_localization_ros2/include/**",
+        "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/map_visualizer/include/**",
+        "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/ndt_omp_ros2/include/**",
+        "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/pointcloud_rotation/include/**",
+        "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/polygon_ros/polygon_rviz_plugins/include/**",
+        "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/polygon_ros/polygon_utils/include/**",
+        "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/velodyne/velodyne_driver/include/**",
+        "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/velodyne/velodyne_laserscan/include/**",
+        "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/velodyne/velodyne_pointcloud/include/**",
+        "/home/genis/Desktop/sdv_ws/src/rviz_overlay_plugin/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

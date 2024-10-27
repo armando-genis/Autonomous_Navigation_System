@@ -97,7 +97,7 @@ colcon build
 ```bash
 ros2 launch sensors_launch velodyne-VLP32C-launch.py #for lidar only
 ros2 launch sensors_launch vectornav.launch.py #for IMU
-ros2 launch sensors_launch lidar&imu.launch.py #for Imu and lidar 
+ros2 launch sensors_launch lidar_imu.launch.py #for Imu and lidar 
 ```
 
 ## 🌏 Launcher for mapping
@@ -113,6 +113,7 @@ ros2 launch global_navigation_launch lidar_subprocessing.launch.py
 ros2 launch robot_description localization_display.launch.py
 ros2 launch global_navigation_launch lidar_localization_ros2.launch.py
 ```
+
 
 ## 🛑 changes:
 
@@ -157,3 +158,42 @@ also wacht that in the "lanelet2_io/io_handlers/OsmFile.cpp" this is in the code
 ```
 
 ### - Polygon ros changes: 
+
+Poligon2D were modifeid to caintais also a z ofset to have diferents polugosn with dierents z offset. polygons_display.cpp, polygon_parts.cpp and polygon_base.hpp were modifed 
+
+Polygon2D.msg: 
+```bash
+# Vertices of a simple polygon. Adjacent points are connected, as are the first and last.
+float64 z_offset
+polygon_msgs/Point2D[] points
+```
+
+polygon_base.hpp:
+```bash
+  void updateProperties()
+  {
+    resetOutlines();
+    if (mode_property_->shouldDrawOutlines())
+    {
+      Ogre::ColourValue outline_color = rviz_common::properties::qtToOgre(outline_color_property_->getColor());
+      for (unsigned int i = 0; i < saved_outlines_.size(); ++i)
+      {
+        double z_offset = saved_outlines_[i].z_offset;  // Use the z_offset from each polygon
+        outline_objects_[i]->setPolygon(saved_outlines_[i], outline_color, z_offset);
+      }
+    }
+
+    if (!mode_property_->shouldDrawFiller() || saved_fillers_.empty())
+    {
+      resetFillers();
+    }
+    else
+    {
+      for (unsigned int i = 0; i < saved_fillers_.size(); ++i)
+      {
+        double z_offset = saved_fillers_[i].outer.z_offset;  // Use the z_offset from each complex polygon
+        filler_objects_[i]->setPolygon(saved_fillers_[i], filler_colors_[i % filler_colors_.size()], z_offset);
+      }
+    }
+  }
+```

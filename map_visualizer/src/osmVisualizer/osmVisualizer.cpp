@@ -14,6 +14,8 @@ OsmVisualizer::OsmVisualizer() : Node("OsmVisualizer")
 
   polygon_publisher_ = this->create_publisher<polygon_msgs::msg::Polygon2DCollection>("/crosswalk_polygons", 10);
 
+  waypoints_publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("/waypoints", 10);
+
   // Load the map
   // lanelet::projection::UtmProjector projector(lanelet::Origin({49.0, 8.0}));
 
@@ -33,6 +35,7 @@ OsmVisualizer::OsmVisualizer() : Node("OsmVisualizer")
   fill_marker(map);
   fill_array_with_left_right(map);
   // writeToFile(m_array);
+  lanelet_routing_test(map);
 }
 
 bool OsmVisualizer::readParameters()
@@ -177,7 +180,6 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
   // Iterate over the lanelets in the map
   for (const auto &ll : t_map->laneletLayer)
   {
-
     std::vector<lanelet::ConstLineString3d> bounds;
     bounds.push_back(ll.leftBound());
     bounds.push_back(ll.rightBound());
@@ -186,122 +188,173 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
     if (ll.hasAttribute(lanelet::AttributeName::Subtype) &&
         ll.attribute(lanelet::AttributeName::Subtype).value() == lanelet::AttributeValueString::Crosswalk)
     {
-      crosswalk_count++; // Increment the crosswalk counter
-      // Create a Polygon2D for the crosswalk
-      polygon_msgs::msg::Polygon2D polygon;
-      polygon.z_offset = 3.0;
+      polygon_msgs::msg::Polygon2D base_polygon;
+      crosswalk_count++;   // Increment the crosswalk counter
+      int num_stripes = 5; // Number of stripes in the zebra crossing
 
-      // For the left bound
+      double max_z = std::numeric_limits<double>::lowest();
       for (const auto &point : ll.leftBound())
       {
-        polygon_msgs::msg::Point2D p;
-        p.x = point.x(); // Convert from lanelet point to polygon_msgs Point2D
-        p.y = point.y();
-        polygon.points.push_back(p); // Add to the polygon's points
-      }
-
-      // For the right bound
-      const auto &right_bound = ll.rightBound();
-      for (int i = right_bound.size() - 1; i >= 0; --i)
-      {
-        polygon_msgs::msg::Point2D p;
-        p.x = right_bound[i].x(); // Convert from lanelet point to polygon_msgs Point2D
-        p.y = right_bound[i].y();
-        polygon.points.push_back(p); // Add to the polygon's points
-      }
-
-      // close the loop by adding the first point to the end
-      polygon.points.push_back(polygon.points[0]);
-
-      // crosswalk_polygons.polygons.push_back(polygon);
-
-      double max_z = std::numeric_limits<double>::lowest(); // Initialize to the lowest possible value
-      for (const auto &point : ll.leftBound())
-      {
-        // std::cout << "Point z: " << point.z() << std::endl; // Print each z value
-
         if (point.z() > max_z)
         {
           max_z = point.z();
         }
       }
 
-      std::cout << "----->max_z set polygon: " << max_z << std::endl;
-
-      // Create zebra crossing stripes
-      int num_stripes = 9;         // Number of stripes
-      double stripe_spacing = 0.5; // Space between stripes
-      double initial_gap = 0.1;    // Initial separation (gap) before the first stripe
-
-      // For each stripe
-      for (int i = 0; i < num_stripes; i++)
+      // =================================================================================================
+      // base polygon
+      // For the left bound
+      for (const auto &point : ll.leftBound())
       {
-        double t = i / static_cast<double>(num_stripes); // Parameter for interpolation
-
-        // Interpolate between left and right bounds to create the stripe
-        polygon_msgs::msg::Point2D left_start, right_start, left_end, right_end;
-
-        // Calculate the direction of the edge (between the first and last points of the left bound)
-        double dx_left = ll.leftBound().back().x() - ll.leftBound()[0].x();
-        double dy_left = ll.leftBound().back().y() - ll.leftBound()[0].y();
-
-        // Normalize the direction vector for the left bound
-        double length_left = std::sqrt(dx_left * dx_left + dy_left * dy_left);
-        dx_left /= length_left;
-        dy_left /= length_left;
-
-        // Interpolate along the left bound
-        left_start.x = (1 - t) * ll.leftBound()[0].x() + t * ll.leftBound().back().x() + initial_gap * dx_left;
-        left_start.y = (1 - t) * ll.leftBound()[0].y() + t * ll.leftBound().back().y() + initial_gap * dy_left;
-
-        // Same for the right bound
-        double dx_right = ll.rightBound().back().x() - ll.rightBound()[0].x();
-        double dy_right = ll.rightBound().back().y() - ll.rightBound()[0].y();
-
-        double length_right = std::sqrt(dx_right * dx_right + dy_right * dy_right);
-        dx_right /= length_right;
-        dy_right /= length_right;
-
-        right_start.x = (1 - t) * ll.rightBound()[0].x() + t * ll.rightBound().back().x() + initial_gap * dx_right;
-        right_start.y = (1 - t) * ll.rightBound()[0].y() + t * ll.rightBound().back().y() + initial_gap * dy_right;
-
-        // Create the stripe end points based on the stripe width
-        left_end.x = left_start.x + stripe_spacing * dx_left;
-        left_end.y = left_start.y + stripe_spacing * dy_left;
-
-        right_end.x = right_start.x + stripe_spacing * dx_right;
-        right_end.y = right_start.y + stripe_spacing * dy_right;
-
-        // Create a stripe polygon
-        polygon_msgs::msg::Polygon2D stripe_polygon;
-        stripe_polygon.z_offset = max_z; // set the ele value of the polygon to the min z value of the lanelet
-
-        stripe_polygon.points.push_back(left_start);
-        stripe_polygon.points.push_back(right_start);
-        stripe_polygon.points.push_back(right_end);
-        stripe_polygon.points.push_back(left_end);
-        stripe_polygon.points.push_back(left_start); // Close the loop
-
-        // Alternate between white and gray stripes
-        std_msgs::msg::ColorRGBA stripe_color;
-        stripe_color.r = 1.0;
-        stripe_color.g = 1.0;
-        stripe_color.b = 1.0;
-        stripe_color.a = 0.8; // Slightly opaque
-
-        // Add the stripe polygon to the crosswalk polygons
-        crosswalk_polygons.polygons.push_back(stripe_polygon);
-
-        // Add the stripe color to the colors list
-        crosswalk_polygons.colors.push_back(stripe_color);
+        polygon_msgs::msg::Point2D p;
+        p.x = point.x(); // Convert from lanelet point to polygon_msgs Point2D
+        p.y = point.y();
+        base_polygon.points.push_back(p); // Add to the polygon's points
       }
 
-      // for to cout the z_offset of the polygon
-      for (size_t i = 0; i < crosswalk_polygons.polygons.size(); i++)
+      // For the right bound
+
+      for (const auto &point : ll.rightBound())
       {
-        std::cout << "----->z_offset set polygon: " << crosswalk_polygons.polygons[i].z_offset << std::endl;
+        polygon_msgs::msg::Point2D p;
+        p.x = point.x(); // Convert from lanelet point to polygon_msgs Point2D
+        p.y = point.y();
+        base_polygon.points.push_back(p); // Add to the polygon's points
+      }
+
+      base_polygon.points.push_back(base_polygon.points[0]);
+
+      base_polygon.z_offset = max_z;
+
+      // crosswalk_polygons.polygons.push_back(base_polygon);
+
+      // =================================================================================================
+      // stripe polygons
+
+      // Calculate the total length of the left and right bounds
+      double left_bound_length = 0.0;
+      for (size_t i = 0; i < ll.leftBound().size() - 1; ++i)
+      {
+        left_bound_length += std::sqrt(
+            std::pow(ll.leftBound()[i + 1].x() - ll.leftBound()[i].x(), 2) +
+            std::pow(ll.leftBound()[i + 1].y() - ll.leftBound()[i].y(), 2) +
+            std::pow(ll.leftBound()[i + 1].z() - ll.leftBound()[i].z(), 2));
+      }
+
+      std::cout << "----->left_bound_length: " << left_bound_length << std::endl;
+
+      if (left_bound_length > 5.0)
+      {
+        num_stripes += static_cast<int>((left_bound_length - 5.0) / 1.0) * 1;
+      }
+
+      std::cout << "----->num_stripes: " << num_stripes << std::endl;
+
+      double stripe_length = left_bound_length / (2 * num_stripes);
+
+      // Generate zebra stripes
+      for (int stripe_idx = 0; stripe_idx < num_stripes; ++stripe_idx)
+      {
+        polygon_msgs::msg::Polygon2D stripe_polygon;
+        stripe_polygon.z_offset = max_z + stripe_polygon_z_offset;
+
+        // Calculate the start and end points for the current stripe on the left and right bounds
+        double start_dist = stripe_idx * 2 * stripe_length;
+        double end_dist = start_dist + stripe_length;
+
+        // Add points for the stripe from the left bound
+        double accumulated_length = 0.0;
+        polygon_msgs::msg::Point2D start_left, end_left;
+        bool start_left_set = false, end_left_set = false;
+
+        for (size_t i = 0; i < ll.leftBound().size() - 1; ++i)
+        {
+          double segment_length = std::sqrt(
+              std::pow(ll.leftBound()[i + 1].x() - ll.leftBound()[i].x(), 2) +
+              std::pow(ll.leftBound()[i + 1].y() - ll.leftBound()[i].y(), 2));
+
+          if (accumulated_length + segment_length > start_dist && !start_left_set)
+          {
+            double ratio = (start_dist - accumulated_length) / segment_length;
+            start_left.x = ll.leftBound()[i].x() + ratio * (ll.leftBound()[i + 1].x() - ll.leftBound()[i].x());
+            start_left.y = ll.leftBound()[i].y() + ratio * (ll.leftBound()[i + 1].y() - ll.leftBound()[i].y());
+            start_left_set = true;
+          }
+
+          if (accumulated_length + segment_length > end_dist && !end_left_set)
+          {
+            double ratio = (end_dist - accumulated_length) / segment_length;
+            end_left.x = ll.leftBound()[i].x() + ratio * (ll.leftBound()[i + 1].x() - ll.leftBound()[i].x());
+            end_left.y = ll.leftBound()[i].y() + ratio * (ll.leftBound()[i + 1].y() - ll.leftBound()[i].y());
+            end_left_set = true;
+            break;
+          }
+
+          accumulated_length += segment_length;
+        }
+
+        if (start_left_set && end_left_set)
+        {
+          stripe_polygon.points.push_back(start_left);
+          stripe_polygon.points.push_back(end_left);
+        }
+
+        // Add points for the stripe from the right bound
+        accumulated_length = 0.0;
+        polygon_msgs::msg::Point2D start_right, end_right;
+        bool start_right_set = false, end_right_set = false;
+
+        for (size_t i = ll.rightBound().size() - 1; i > 0; --i)
+        {
+          double segment_length = std::sqrt(
+              std::pow(ll.rightBound()[i].x() - ll.rightBound()[i - 1].x(), 2) +
+              std::pow(ll.rightBound()[i].y() - ll.rightBound()[i - 1].y(), 2));
+
+          if (accumulated_length + segment_length > start_dist && !start_right_set)
+          {
+            double ratio = (start_dist - accumulated_length) / segment_length;
+            start_right.x = ll.rightBound()[i].x() + ratio * (ll.rightBound()[i - 1].x() - ll.rightBound()[i].x());
+            start_right.y = ll.rightBound()[i].y() + ratio * (ll.rightBound()[i - 1].y() - ll.rightBound()[i].y());
+            start_right_set = true;
+          }
+
+          if (accumulated_length + segment_length > end_dist && !end_right_set)
+          {
+            double ratio = (end_dist - accumulated_length) / segment_length;
+            end_right.x = ll.rightBound()[i].x() + ratio * (ll.rightBound()[i - 1].x() - ll.rightBound()[i].x());
+            end_right.y = ll.rightBound()[i].y() + ratio * (ll.rightBound()[i - 1].y() - ll.rightBound()[i].y());
+            end_right_set = true;
+            break;
+          }
+
+          accumulated_length += segment_length;
+        }
+
+        if (start_right_set && end_right_set)
+        {
+          stripe_polygon.points.push_back(end_right);
+          stripe_polygon.points.push_back(start_right);
+        }
+
+        // Close the polygon by adding the first point again
+        if (stripe_polygon.points.size() >= 4)
+        {
+
+          // Set color for the stripe
+          std_msgs::msg::ColorRGBA stripe_color;
+          stripe_color.r = 0.6;
+          stripe_color.g = 0.6;
+          stripe_color.b = 0.6;
+          stripe_color.a = 0.8;
+
+          crosswalk_polygons.colors.push_back(stripe_color);
+
+          stripe_polygon.points.push_back(stripe_polygon.points[0]);
+          crosswalk_polygons.polygons.push_back(stripe_polygon);
+        }
       }
     }
+
     else
     {
       // For each bound (left and right), create a marker
@@ -336,4 +389,116 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
     }
   }
   std::cout << "----> Number of crosswalk lanelets: " << crosswalk_count << std::endl;
+}
+
+void OsmVisualizer::lanelet_routing_test(lanelet::LaneletMapPtr &map)
+{
+  // Create traffic rules and routing graph
+  auto trafficRules = lanelet::traffic_rules::TrafficRulesFactory::create(
+      lanelet::Locations::Germany, lanelet::Participants::Vehicle);
+
+  // Add a routing cost module with parameters for laneChangeCost and minLaneChangeLength
+  double laneChangeCost = 10.0;     // Example cost for lane changes
+  double minLaneChangeLength = 5.0; // Example minimum lane change length
+  lanelet::routing::RoutingCostPtrs routingCosts = {std::make_shared<lanelet::routing::RoutingCostDistance>(laneChangeCost, minLaneChangeLength)};
+
+  // Build the routing graph with the specified routing costs
+  lanelet::routing::RoutingGraphPtr routingGraph = lanelet::routing::RoutingGraph::build(*map, *trafficRules, routingCosts);
+
+  if (routingGraph)
+  {
+    const auto &lanelets = map->laneletLayer;
+
+    // Retrieve start and goal lanelets by ID
+    lanelet::ConstLanelet startLanelet = map->laneletLayer.get(77);
+    lanelet::ConstLanelet goalLanelet = map->laneletLayer.get(512);
+
+    visualization_msgs::msg::MarkerArray graph_waypoint_markers;
+    int waypoint_id = 0;
+
+    // Iterate over all lanelets in the map to extract all waypoints in the graph
+    for (const auto &lanelet : lanelets)
+    {
+      for (const auto &point : lanelet.centerline2d())
+      {
+        visualization_msgs::msg::Marker waypoint_marker;
+        waypoint_marker.header.frame_id = "map";
+        waypoint_marker.header.stamp = rclcpp::Clock{}.now();
+        waypoint_marker.ns = "graph_waypoints";
+        waypoint_marker.id = waypoint_id++;
+        waypoint_marker.type = visualization_msgs::msg::Marker::SPHERE;
+        waypoint_marker.action = visualization_msgs::msg::Marker::ADD;
+
+        waypoint_marker.color.a = 1.0;
+
+        // Set color based on whether the point belongs to the start or goal lanelet
+        if (lanelet.id() == startLanelet.id())
+        {
+          // Red color for start and goal nodes
+          waypoint_marker.scale.x = 1.7;
+          waypoint_marker.scale.y = 1.7;
+          waypoint_marker.scale.z = 1.7;
+          waypoint_marker.color.r = 1.0;
+          waypoint_marker.color.g = 0.0;
+          waypoint_marker.color.b = 0.0;
+
+          std::cout << yellow << "----> Lanelet ID: " << blue << lanelet.id() << reset << std::endl;
+        }
+        else if (lanelet.id() == goalLanelet.id())
+        {
+          // Green color for other nodes
+          waypoint_marker.scale.x = 1.7;
+          waypoint_marker.scale.y = 1.7;
+          waypoint_marker.scale.z = 1.7;
+          waypoint_marker.color.r = 0.0;
+          waypoint_marker.color.g = 1.0;
+          waypoint_marker.color.b = 0.0;
+
+          std::cout << green << "----> Lanelet ID: " << blue << lanelet.id() << reset << std::endl;
+        }
+        else
+        {
+          // Blue color for other nodes
+          waypoint_marker.scale.x = 1.0;
+          waypoint_marker.scale.y = 1.0;
+          waypoint_marker.scale.z = 1.0;
+          waypoint_marker.color.r = 0.0;
+          waypoint_marker.color.g = 0.0;
+          waypoint_marker.color.b = 1.0;
+
+          std::cout << blue << "----> Lanelet ID: " << blue << lanelet.id() << reset << std::endl;
+        }
+
+        // Set the position for the waypoint
+        waypoint_marker.pose.position.x = point.x();
+        waypoint_marker.pose.position.y = point.y();
+        waypoint_marker.pose.position.z = 0.0;
+
+        // Add the marker to the marker array
+        graph_waypoint_markers.markers.push_back(waypoint_marker);
+      }
+    }
+
+    // Publish the complete graph's waypoints as a MarkerArray
+    waypoints_publisher_->publish(graph_waypoint_markers);
+
+    // Find the shortest path between the start and goal lanelets
+    auto route = routingGraph->getRoute(startLanelet, goalLanelet);
+    if (route)
+    {
+      std::cout << "Route found with " << route->shortestPath().size() << " lanelets." << std::endl;
+      for (const auto &lanelet : route->shortestPath())
+      {
+        std::cout << "Lanelet ID: " << lanelet.id() << std::endl;
+      }
+    }
+    else
+    {
+      RCLCPP_WARN(this->get_logger(), "No route found between start and goal lanelets.");
+    }
+  }
+  else
+  {
+    RCLCPP_ERROR(this->get_logger(), "Failed to create RoutingGraph");
+  }
 }
