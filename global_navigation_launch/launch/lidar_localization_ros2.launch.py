@@ -34,9 +34,6 @@ def generate_launch_description():
         package='lidar_localization_ros2',
         executable='lidar_localization_node',
         parameters=[localization_param_dir],
-        remappings=[
-        ('/cloud','/points_rotated')
-        ],
         output='screen')
 
     to_inactive = launch.actions.EmitEvent(

@@ -68,6 +68,21 @@ git clone https://github.com/KIT-MRT/mrt_cmake_modules.git
 
 ```
 
+## 📢 Code Modifications Before colcon build
+
+Before building the package, make the following changes to the file lidar_localization_component.cpp located in the src directory of lidar_localization_ros2. These adjustments will modify the default subscriber topics to match the correct topics of the car. 
+Navigate to `lidar_localization_ros2/src/lidar_localization_component.cpp` and change the lines 234 and 238 for this ones:
+
+```bash
+  cloud_sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
+      "points_rotated", rclcpp::SensorDataQoS(),
+      std::bind(&PCLLocalization::cloudReceived, this, std::placeholders::_1));
+
+  imu_sub_ = create_subscription<sensor_msgs::msg::Imu>(
+      "vectornav/imu", rclcpp::SensorDataQoS(),
+      std::bind(&PCLLocalization::imuReceived, this, std::placeholders::_1));
+```
+
 ## 📥 Building
 If it is the fist time you build the workspace follow the next commands to do not crash your computer. 
  ```bash
@@ -93,27 +108,32 @@ colcon build
 ## 🏅 IMU Permistion
 `sudo chmod 666 /dev/ttyUSB0`
 
-## 💡 Sensor Launcher 
+## 💡 Sensor Launchers
 ```bash
 ros2 launch sensors_launch velodyne-VLP32C-launch.py #for lidar only
 ros2 launch sensors_launch vectornav.launch.py #for IMU
 ros2 launch sensors_launch lidar_imu.launch.py #for Imu and lidar 
 ```
 
-## 🌏 Launcher for mapping
+## 🌏 Launchers for mapping
 ```bash
 ros2 launch global_navigation_launch lidar_subprocessing.launch.py
 ros2 launch robot_description display.launch.py
 ros2 launch global_navigation_launch lio_sam.launch.py
 ```
 
-## 🛰️ Launcher for Localization
+## 🛰️ Launchers for Localization
 ```bash
 ros2 launch global_navigation_launch lidar_subprocessing.launch.py
 ros2 launch robot_description localization_display.launch.py
 ros2 launch global_navigation_launch lidar_localization_ros2.launch.py
 ```
 
+## 🛣️ Launchers for HD map & waypoints routing
+```bash
+ros2 launch map_visualizer osm_visualizer.launch.py
+ros2 launch waypoints_routing waypoints.launch.py
+```
 
 ## 🛑 changes:
 
@@ -159,7 +179,13 @@ also wacht that in the "lanelet2_io/io_handlers/OsmFile.cpp" this is in the code
 
 ### - Polygon ros changes: 
 
-Poligon2D were modifeid to caintais also a z ofset to have diferents polugosn with dierents z offset. polygons_display.cpp, polygon_parts.cpp and polygon_base.hpp were modifed 
+The Polygon2D structure has been modified to include a z offset, allowing for multiple polygons with different z offsets. The following files were updated to incorporate these changes:
+
+- polygon_rviz_plugins/src/polygons_display.cpp
+- polygon_rviz_plugins/src/polygon_parts.cpp
+- polygon_rviz_plugins/include/polygon_rviz_plugins/polygon_base.hpp
+
+These modifications enable the use of 3D polygons with varied z positions in the ROS environment.
 
 Polygon2D.msg: 
 ```bash
@@ -197,3 +223,16 @@ polygon_base.hpp:
     }
   }
 ```
+
+
+## 🛣️ Considerations for Creating HD Maps with Vector Map Builder
+
+When creating a `Lanelet2Map` in the Vector Map Builder, follow these steps to configure the map projection:
+
+1. Click on **Change Map Project Info**.
+2. Select **Set MGRS from Lat/Lon** and input the following coordinates:
+   - **Latitude:** `49`
+   - **Longitude:** `8.4`
+3. Click **Convert** to apply these settings.
+
+> **Note:** When exporting the map, you may encounter an error indicating that the component `x` or `y` is negative. This error can be safely ignored, as it does not impact the map creation process. Proceed with creating the map even if these errors appear.

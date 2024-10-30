@@ -50,7 +50,7 @@ void PolygonsDisplay::updateStyle()
 
 void PolygonsDisplay::processMessage(const polygon_msgs::msg::Polygon2DCollection::ConstSharedPtr msg)
 {
-  std::cout << "processMessage" << std::endl;
+  // std::cout << "processMessage" << std::endl;
   std::vector<polygon_msgs::msg::Polygon2D> outlines;
   std::vector<polygon_msgs::msg::ComplexPolygon2D> fillers;
 

@@ -41,7 +41,8 @@ def generate_launch_description():
         package='tf2_ros',
         executable='static_transform_publisher',
         name='static_transform_velodyne_to_base',
-        arguments=['-1.2', '0', '-1.55', '0', '-0.1045', '0', '1' ,'velodyne', 'base_link'],
+        # arguments=['-1.2', '0', '-1.55', '0', '-0.1045', '0', '1' ,'velodyne', 'base_link'],
+        arguments=['-1.2', '0', '-1.55', '0', '0', '0', '1' , 'velodyne', 'base_link'],
     )
 
     # Static transform: Base Link -> Vectornav
