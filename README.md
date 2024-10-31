@@ -123,6 +123,18 @@ ros2 launch global_navigation_launch lio_sam.launch.py
 ```
 
 ## 🛰️ Launchers for Localization
+
+Enter to `/global_navigation_launch/config/localization.yaml` an add your path to your cloudGlobal.pcd or cloudSurf.pcd:
+```bash
+map_path: "/home/genis/Downloads/LOAM/cloudSurf.pcd"
+```
+
+```bash
+ros2 launch global_navigation_launch lidar_subprocessing.launch.py
+ros2 launch robot_description display.launch.py
+ros2 launch global_navigation_launch lio_sam.launch.py
+```
+
 ```bash
 ros2 launch global_navigation_launch lidar_subprocessing.launch.py
 ros2 launch robot_description localization_display.launch.py
@@ -133,6 +145,13 @@ ros2 launch global_navigation_launch lidar_localization_ros2.launch.py
 ```bash
 ros2 launch map_visualizer osm_visualizer.launch.py
 ros2 launch waypoints_routing waypoints.launch.py
+```
+
+## 🎥 Launchers rviz2
+
+In you workspace path run:
+```bash
+rviz2 -d src/Autonomous_Navigation_System/global_navigation_launch/rviz/localization.rviz
 ```
 
 ## 🛑 changes:
