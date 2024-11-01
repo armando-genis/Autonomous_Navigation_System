@@ -1,6 +1,6 @@
 # Autonomous_Navigation_System
  
-## 📥 Install dependencies
+## → 📥 Install dependencies
 Before installing the necessary dependencies, remember to source the appropriate ROS2 environment for your ROS2 version. This ensures the correct packages are installed for your distribution.
 
 ```bash
@@ -36,7 +36,7 @@ sudo apt update
 sudo apt install libgtsam-dev libgtsam-unstable-dev
 ```
 
-## 📦 Install github repository
+## → 📦 Install github repository
 Clone the GitHub repository into the `ros2_ws/src/Autonomous_Navigation_System/` folder.
 ```bash
 # LIO SAM
@@ -68,7 +68,7 @@ git clone https://github.com/KIT-MRT/mrt_cmake_modules.git
 
 ```
 
-## 📢 Code Modifications Before colcon build
+## → 📢 Code Modifications Before colcon build
 
 <img height="50" src="https://user-images.githubusercontent.com/25181517/192108891-d86b6220-e232-423a-bf5f-90903e6887c3.png"> 
 
@@ -85,7 +85,7 @@ Navigate to `lidar_localization_ros2/src/lidar_localization_component.cpp` and c
       std::bind(&PCLLocalization::imuReceived, this, std::placeholders::_1));
 ```
 
-## 📥 Building
+## → 📥 Building
 
 <img height="50" src="https://user-images.githubusercontent.com/25181517/192158606-7c2ef6bd-6e04-47cf-b5bc-da2797cb5bda.png">
 
@@ -108,53 +108,81 @@ source install/setup.bash
 colcon build
 ```
 
-## 🏅 lidar config 
+## → 🏅 lidar config 
 `sudo ifconfig enp2s0 10.66.171.101`
 
-## 🏅 IMU Permistion
+## → 🏅 IMU Permistion
 `sudo chmod 666 /dev/ttyUSB0`
 
-## 💡 Sensor Launchers
+## → 💡 Sensor Launchers
+Launch individual or combined sensor configurations as needed:
+- For LiDAR only:
 ```bash
-ros2 launch sensors_launch velodyne-VLP32C-launch.py #for lidar only
-ros2 launch sensors_launch vectornav.launch.py #for IMU
-ros2 launch sensors_launch lidar_imu.launch.py #for Imu and lidar 
+ros2 launch sensors_launch velodyne-VLP32C-launch.py
+```
+- For IMU only:
+```bash
+ros2 launch sensors_launch vectornav.launch.py 
+```
+- For LiDAR and IMU combined:
+```bash
+ros2 launch sensors_launch lidar_imu.launch.py 
 ```
 
-## 🌏 Launchers for mapping
+## → 🌏 Launchers for mapping
+Run the following commands to initialize mapping processes:
 ```bash
 ros2 launch global_navigation_launch lidar_subprocessing.launch.py
 ros2 launch robot_description display.launch.py
 ros2 launch global_navigation_launch lio_sam.launch.py
 ```
+- `lidar_subprocessing.launch.py`:
+  This launch file adjusts the LiDAR rotation by 0.2 radians on the Y-axis, compensating for its setup angle in the car 🚗. It also creates a buffer to synchronize LiDAR and IMU messages, ensuring the sensor data is aligned for accurate mapping.
 
-## 🛰️ Launchers for Localization
+- `display.launch.py` (Robot Description):
+  This launch configures the robot’s tf (transform) setup, where base_link 🌐 acts as the parent frame for all other frames.
 
-Enter to `/global_navigation_launch/config/localization.yaml` an add your path to your cloudGlobal.pcd or cloudSurf.pcd:
+- `lio_sam.launch.py`:
+  This command starts the LIO-SAM (LiDAR-Inertial Odometry and Mapping) process, which integrates LiDAR and IMU data to create a detailed, real-time map 🗺️ of the environment for localization and navigation.
+
+## → 🛰️ Configure Launchers for Localization
+
+1. Open the localization.yaml file located at /global_navigation_launch/config/.
+2. Add the path to your cloudGlobal.pcd or cloudSurf.pcd file. Update the map_path parameter as shown below:
+
 ```bash
 map_path: "/home/genis/Downloads/LOAM/cloudSurf.pcd"
 ```
-
+After updating the file, launch the system with the following commands:
 ```bash
 ros2 launch global_navigation_launch lidar_subprocessing.launch.py
-ros2 launch robot_description display.launch.py
-ros2 launch global_navigation_launch lio_sam.launch.py
+ros2 launch robot_description localization_display.launch.py
+ros2 launch global_navigation_launch lidar_localization_ros2.launch.py
 ```
+- `lidar_subprocessing.launch.py`:
+This launch file compensates for the LiDAR setup on the car 🚗, applying a 0.2-radian rotation adjustment on the Y-axis. Additionally, it creates a buffer to synchronize LiDAR and IMU messages, ensuring precise alignment for accurate localization.
 
-## 🛣️ Launchers for HD map & waypoints routing
+- `localization_display.launch.py` (Robot Description):
+This file sets up the transform (tf) hierarchy, where the velodyne frame 🌐 acts as the parent frame. In this setup, velodyne is connected to the map frame, making it the primary reference for localization, with other frames structured accordingly.
+
+- `lidar_localization_ros2.launch.py`:
+This command launches the LiDAR-based localization process, integrating data from LiDAR and IMU sensors to create a real-time map 🗺️, enabling precise positioning within the environment.
+
+
+## → 🛣️ Launchers for HD map & waypoints routing
 ```bash
 ros2 launch map_visualizer osm_visualizer.launch.py
 ros2 launch waypoints_routing waypoints.launch.py
 ```
 
-## 🎥 Launchers rviz2
+## → 🎥 Launchers rviz2
 
 In you workspace path run:
 ```bash
 rviz2 -d src/Autonomous_Navigation_System/global_navigation_launch/rviz/localization.rviz
 ```
 
-## 🛑 changes:
+## → 🛑 changes:
 
 ### - Lanelet changes
 In the file called /lanelet2_projection/LocalCartesian.cpp I change the to this when using localcartesian map type in orden to get the ele attribute from the oms correctly and not modify. 
@@ -244,7 +272,7 @@ polygon_base.hpp:
 ```
 
 
-## 🛣️ Considerations for Creating HD Maps with Vector Map Builder
+## → 🛣️ Considerations for Creating HD Maps with Vector Map Builder
 
 When creating a `Lanelet2Map` in the Vector Map Builder, follow these steps to configure the map projection:
 
