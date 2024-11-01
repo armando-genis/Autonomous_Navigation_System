@@ -5,6 +5,7 @@ Before installing the necessary dependencies, remember to source the appropriate
 
 ```bash
 #fundamental libraries
+sudo apt update
 sudo apt-get install libeigen3-dev
 sudo apt install libpcl-dev
 sudo apt-get install libpcap-dev
@@ -28,7 +29,6 @@ sudo apt install ros-$ROS_DISTRO-velodyne-msgs
 sudo apt install ros-$ROS_DISTRO-diagnostic-updater
 #sudo apt install ros-$ROS_DISTRO-lanelet2 (no longer required because in the repo is a custom repo)
 sudo apt install ros-$ROS_DISTRO-color-util
-
 
 #GTSAM librari for LIO-SAM
 sudo add-apt-repository ppa:borglab/gtsam-release-4.1
@@ -70,6 +70,8 @@ git clone https://github.com/KIT-MRT/mrt_cmake_modules.git
 
 ## 📢 Code Modifications Before colcon build
 
+<img height="50" src="https://user-images.githubusercontent.com/25181517/192108891-d86b6220-e232-423a-bf5f-90903e6887c3.png"> 
+
 Before building the package, make the following changes to the file lidar_localization_component.cpp located in the src directory of lidar_localization_ros2. These adjustments will modify the default subscriber topics to match the correct topics of the car. 
 Navigate to `lidar_localization_ros2/src/lidar_localization_component.cpp` and change the lines 234 and 238 for this ones:
 
@@ -84,6 +86,9 @@ Navigate to `lidar_localization_ros2/src/lidar_localization_component.cpp` and c
 ```
 
 ## 📥 Building
+
+<img height="50" src="https://user-images.githubusercontent.com/25181517/192158606-7c2ef6bd-6e04-47cf-b5bc-da2797cb5bda.png">
+
 If it is the fist time you build the workspace follow the next commands to do not crash your computer. 
  ```bash
 colcon build --packages-select lio_sam
@@ -99,6 +104,7 @@ colcon build --packages-select velodyne
 colcon build --packages-select lidar_imu_sync
 colcon build --packages-select mapping_localization_launch
 colcon build --packages-select polygon_msgs
+source install/setup.bash
 colcon build
 ```
 
@@ -133,12 +139,6 @@ map_path: "/home/genis/Downloads/LOAM/cloudSurf.pcd"
 ros2 launch global_navigation_launch lidar_subprocessing.launch.py
 ros2 launch robot_description display.launch.py
 ros2 launch global_navigation_launch lio_sam.launch.py
-```
-
-```bash
-ros2 launch global_navigation_launch lidar_subprocessing.launch.py
-ros2 launch robot_description localization_display.launch.py
-ros2 launch global_navigation_launch lidar_localization_ros2.launch.py
 ```
 
 ## 🛣️ Launchers for HD map & waypoints routing
