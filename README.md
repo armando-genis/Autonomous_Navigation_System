@@ -85,6 +85,46 @@ Navigate to `lidar_localization_ros2/src/lidar_localization_component.cpp` and c
       std::bind(&PCLLocalization::imuReceived, this, std::placeholders::_1));
 ```
 
+### → 🔄 Adjusting LiDAR Settings for Different Models
+
+If you’re using a different LiDAR model, update the topic configuration in the pointcloud_rotation package to ensure correct data processing. The package expects a specific topic, /velodyne_points, to receive point cloud data.
+
+1. Update the Point Cloud Topic:
+
+  - Navigate to `pointcloud_rotation/src/pointcloud_rotation_node.cpp`. 
+  - On line 8, change the topic in the subscription line to match your LiDAR’s point cloud topic:
+
+  ```bash
+  sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>("/your_lidar_topic", 10, std::bind(&pointcloud_rotation_node::pointCloudCallback, this, std::placeholders::_1));
+  ```
+
+  Note: The points_rotated topic is then published by this node and serves as an input for the Mapping and Localization sections.
+
+2. Disable Rotation for Non-Rotating LiDARs:
+
+  - If your LiDAR does not require any rotation adjustments, modify the rotation parameters in `global_navigation_launch/config/rotation_params.yaml`.
+  - Update the following settings:
+
+  ```bash
+  pointcloud_rotation_node:
+    ros__parameters:
+      sensor_rotation_y_: 0.20944   # Set to 0.174533 for slight rotation or 0 for no rotation
+  ```
+  Setting sensor_rotation_y_ to 0 will effectively disable the rotation correction, which is useful if your LiDAR is already aligned with the coordinate frame.
+
+## → 🛣️ Considerations for Creating HD Maps with Vector Map Builder
+
+When creating a `Lanelet2Map` in the Vector Map Builder, follow these steps to configure the map projection:
+
+1. Click on **Change Map Project Info**.
+2. Select **Set MGRS from Lat/Lon** and input the following coordinates:
+   - **Latitude:** `49`
+   - **Longitude:** `8.4`
+3. Click **Convert** to apply these settings.
+
+> **Note:** When exporting the map, you may encounter an error indicating that the component `x` or `y` is negative. This error can be safely ignored, as it does not impact the map creation process. Proceed with creating the map even if these errors appear.
+
+
 ## → 📥 Building
 
 <img height="50" src="https://user-images.githubusercontent.com/25181517/192158606-7c2ef6bd-6e04-47cf-b5bc-da2797cb5bda.png">
@@ -272,14 +312,3 @@ polygon_base.hpp:
 ```
 
 
-## → 🛣️ Considerations for Creating HD Maps with Vector Map Builder
-
-When creating a `Lanelet2Map` in the Vector Map Builder, follow these steps to configure the map projection:
-
-1. Click on **Change Map Project Info**.
-2. Select **Set MGRS from Lat/Lon** and input the following coordinates:
-   - **Latitude:** `49`
-   - **Longitude:** `8.4`
-3. Click **Convert** to apply these settings.
-
-> **Note:** When exporting the map, you may encounter an error indicating that the component `x` or `y` is negative. This error can be safely ignored, as it does not impact the map creation process. Proceed with creating the map even if these errors appear.
