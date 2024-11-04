@@ -144,6 +144,7 @@ colcon build --packages-select velodyne
 colcon build --packages-select lidar_imu_sync
 colcon build --packages-select mapping_localization_launch
 colcon build --packages-select polygon_msgs
+colcon build --packages-select traffic_information_msgs
 source install/setup.bash
 colcon build
 ```

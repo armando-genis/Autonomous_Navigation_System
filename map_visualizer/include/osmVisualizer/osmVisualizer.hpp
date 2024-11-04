@@ -27,6 +27,12 @@
 #include <lanelet2_traffic_rules/TrafficRules.h>
 #include <boost/optional/optional_io.hpp>
 
+// custon messages
+// RoadElements
+#include "traffic_information_msgs/msg/road_elements.hpp"
+// for RoadElementsCollection
+#include "traffic_information_msgs/msg/road_elements_collection.hpp"
+
 // we want assert statements to work in release mode
 #undef NDEBUG
 
@@ -51,11 +57,14 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr publisher_;
   rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr array_publisher_;
   rclcpp::Publisher<polygon_msgs::msg::Polygon2DCollection>::SharedPtr polygon_publisher_;
-  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr waypoints_publisher_;
+  rclcpp::Publisher<traffic_information_msgs::msg::RoadElementsCollection>::SharedPtr road_elements_publisher_;
 
   std_msgs::msg::Float64MultiArray m_array;
   visualization_msgs::msg::MarkerArray m_marker_array;
+
+  // msgs for the crosswalks and road information
   polygon_msgs::msg::Polygon2DCollection crosswalk_polygons;
+  traffic_information_msgs::msg::RoadElementsCollection road_elements;
 
   // colors for the terminal
   std::string green = "\033[1;32m";

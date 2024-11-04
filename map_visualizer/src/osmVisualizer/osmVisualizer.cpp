@@ -10,11 +10,10 @@ OsmVisualizer::OsmVisualizer() : Node("OsmVisualizer")
 
   publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("/hd_map", 10);
   array_publisher_ = this->create_publisher<std_msgs::msg::Float64MultiArray>("/array", 10);
-  timer_ = this->create_wall_timer(500ms, std::bind(&OsmVisualizer::timer_callback, this));
+  timer_ = this->create_wall_timer(700ms, std::bind(&OsmVisualizer::timer_callback, this));
 
   polygon_publisher_ = this->create_publisher<polygon_msgs::msg::Polygon2DCollection>("/crosswalk_polygons", 10);
-
-  waypoints_publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("/waypoints", 10);
+  road_elements_publisher_ = this->create_publisher<traffic_information_msgs::msg::RoadElementsCollection>("/road_elements", 10);
 
   lanelet::Origin origin({49, 8.4});
   lanelet::projection::LocalCartesianProjector projector(origin);
@@ -58,7 +57,7 @@ void OsmVisualizer::timer_callback()
   if (!crosswalk_polygons.polygons.empty())
   {
     polygon_publisher_->publish(crosswalk_polygons);
-    std::cout << "Published crosswalk polygons" << std::endl;
+    road_elements_publisher_->publish(road_elements);
   }
 }
 
@@ -154,9 +153,13 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
   size_t i = 0;
   int crosswalk_count = 0;             // Counter for crosswalk subtype
   crosswalk_polygons.polygons.clear(); // Clear the crosswalk polygons
+  road_elements.polygons.clear();      // Clear the road elements
 
   crosswalk_polygons.header.stamp = rclcpp::Clock{}.now();
   crosswalk_polygons.header.frame_id = "map";
+
+  road_elements.header.stamp = rclcpp::Clock{}.now();
+  road_elements.header.frame_id = "map";
 
   std_msgs::msg::ColorRGBA color;
   color.r = 0.6; // Red color
@@ -182,6 +185,8 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
         ll.attribute(lanelet::AttributeName::Subtype).value() == lanelet::AttributeValueString::Crosswalk)
     {
       polygon_msgs::msg::Polygon2D base_polygon;
+      traffic_information_msgs::msg::RoadElements crosswalks_element;
+
       crosswalk_count++;   // Increment the crosswalk counter
       int num_stripes = 5; // Number of stripes in the zebra crossing
 
@@ -195,14 +200,14 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
       }
 
       // =================================================================================================
-      // base polygon
+      // base polygon for road_elements_publisher
       // For the left bound
       for (const auto &point : ll.leftBound())
       {
         polygon_msgs::msg::Point2D p;
         p.x = point.x(); // Convert from lanelet point to polygon_msgs Point2D
         p.y = point.y();
-        base_polygon.points.push_back(p); // Add to the polygon's points
+        crosswalks_element.points.push_back(p); // Add to the polygon's points
       }
 
       // For the right bound
@@ -212,14 +217,18 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
         polygon_msgs::msg::Point2D p;
         p.x = right_bound[i].x(); // Convert from lanelet point to polygon_msgs Point2D
         p.y = right_bound[i].y();
-        base_polygon.points.push_back(p); // Add to the polygon's points
+        crosswalks_element.points.push_back(p); // Add to the polygon's points
       }
 
-      base_polygon.points.push_back(base_polygon.points[0]);
+      crosswalks_element.points.push_back(crosswalks_element.points[0]);
 
-      base_polygon.z_offset = max_z;
+      crosswalks_element.id = crosswalk_count; // Set the ID for the crosswal
 
-      // crosswalk_polygons.polygons.push_back(base_polygon);
+      crosswalks_element.type = ll.attribute(lanelet::AttributeName::Subtype).value();
+
+      road_elements.polygons.push_back(crosswalks_element);
+
+      // std::cout << "crosswal type: " << ll.attribute(lanelet::AttributeName::Subtype).value() << std::endl;
 
       // =================================================================================================
       // stripe polygons
@@ -234,14 +243,14 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
             std::pow(ll.leftBound()[i + 1].z() - ll.leftBound()[i].z(), 2));
       }
 
-      std::cout << "----->left_bound_length: " << left_bound_length << std::endl;
+      // std::cout << "----->left_bound_length: " << left_bound_length << std::endl;
 
       if (left_bound_length > 5.0)
       {
         num_stripes += static_cast<int>((left_bound_length - 5.0) / 1.0) * 1;
       }
 
-      std::cout << "----->num_stripes: " << num_stripes << std::endl;
+      // std::cout << "----->num_stripes: " << num_stripes << std::endl;
 
       double stripe_length = left_bound_length / (2 * num_stripes);
 
@@ -381,5 +390,5 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
       }
     }
   }
-  std::cout << "----> Number of crosswalk lanelets: " << crosswalk_count << std::endl;
+  std::cout << blue << "----> Number of crosswalk lanelets: " << crosswalk_count << reset << std::endl;
 }
