@@ -144,7 +144,14 @@ colcon build --packages-select velodyne
 colcon build --packages-select lidar_imu_sync
 colcon build --packages-select mapping_localization_launch
 colcon build --packages-select polygon_msgs
+colcon build --packages-select lanelet2_core
+colcon build --packages-select lanelet2_maps
+colcon build --packages-select lanelet2_io
+colcon build --packages-select lanelet2_projection
+colcon build --packages-select lanelet2_traffic_rules
+colcon build --packages-select lanelet2_routing
 colcon build --packages-select traffic_information_msgs
+colcon build --packages-select lanelet2_validation
 source install/setup.bash
 colcon build
 ```
