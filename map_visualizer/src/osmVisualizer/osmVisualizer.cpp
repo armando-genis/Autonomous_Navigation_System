@@ -26,6 +26,7 @@ OsmVisualizer::OsmVisualizer() : Node("OsmVisualizer")
     point.y() = point.attribute("local_y").asDouble().value();
   }
 
+  RCLCPP_INFO(this->get_logger(), "\033[1;32m----> OsmVisualizer_node initialized.\033[0m");
   fill_marker(map);
   fill_array_with_left_right(map);
 }
@@ -125,19 +126,79 @@ void OsmVisualizer::fill_array_with_left_right(lanelet::LaneletMapPtr &t_map)
   m_array.layout.dim[1].size = 4;
   m_array.layout.dim[1].stride = 4;
 
+  // Define an interpolation interval (distance between each interpolated point)
+  double interval = 0.5; // Adjust this value based on your map resolution and needs
+
   for (const auto &ll : t_map->laneletLayer)
   {
     std::vector<lanelet::ConstLineString3d> bounds;
     bounds.push_back(ll.leftBound());
     bounds.push_back(ll.rightBound());
 
-    size_t size = (bounds[0].size() < bounds[1].size()) ? bounds[0].size() : bounds[1].size();
-    for (size_t i = 0; i < size; i++)
+    // Check if the lanelet has the subtype 'crosswalk' and skip it
+    if (ll.hasAttribute(lanelet::AttributeName::Subtype) &&
+        ll.attribute(lanelet::AttributeName::Subtype).value() != lanelet::AttributeValueString::Crosswalk)
     {
-      m_array.data.push_back(bounds[0][i].x());
-      m_array.data.push_back(bounds[0][i].y());
-      m_array.data.push_back(bounds[1][i].x());
-      m_array.data.push_back(bounds[1][i].y());
+      // Check if the lanelet has exactly four points on each boundary (rectangular structure)
+      if (bounds[0].size() == 2 && bounds[1].size() == 2)
+      {
+
+        // std::cout << blue << "Rects  lanelet ID: " << ll.id() << reset << std::endl;
+
+        size_t left_size = bounds[0].size();
+        size_t right_size = bounds[1].size();
+
+        // Interpolate between each pair of consecutive points
+        for (size_t segment = 0; segment < left_size - 1; ++segment)
+        {
+          // Get start and end points of the current segment for left and right boundaries
+          auto left_start = bounds[0][segment];
+          auto left_end = bounds[0][segment + 1];
+          auto right_start = bounds[1][segment];
+          auto right_end = bounds[1][segment + 1];
+
+          // Calculate the distance for the left and right segments
+          double left_dist = std::sqrt(std::pow(left_end.x() - left_start.x(), 2) +
+                                       std::pow(left_end.y() - left_start.y(), 2));
+          double right_dist = std::sqrt(std::pow(right_end.x() - right_start.x(), 2) +
+                                        std::pow(right_end.y() - right_start.y(), 2));
+
+          // Determine the number of interpolation points based on the shortest segment
+          int num_points = static_cast<int>(std::min(left_dist, right_dist) / interval);
+
+          for (int i = 0; i <= num_points; ++i)
+          {
+            // Interpolate for the left boundary
+            double t = static_cast<double>(i) / num_points;
+            double left_x = left_start.x() + t * (left_end.x() - left_start.x());
+            double left_y = left_start.y() + t * (left_end.y() - left_start.y());
+
+            // Interpolate for the right boundary
+            double right_x = right_start.x() + t * (right_end.x() - right_start.x());
+            double right_y = right_start.y() + t * (right_end.y() - right_start.y());
+
+            // Add the interpolated points to m_array
+            m_array.data.push_back(left_x);
+            m_array.data.push_back(left_y);
+            m_array.data.push_back(right_x);
+            m_array.data.push_back(right_y);
+          }
+        }
+      }
+      else
+      {
+        // If there are more than four points, just add the existing points without interpolation
+        // std::cout << green << "Not rect lanelet ID: " << ll.id() << reset << std::endl;
+
+        size_t size = std::min(bounds[0].size(), bounds[1].size());
+        for (size_t i = 0; i < size; i++)
+        {
+          m_array.data.push_back(bounds[0][i].x());
+          m_array.data.push_back(bounds[0][i].y());
+          m_array.data.push_back(bounds[1][i].x());
+          m_array.data.push_back(bounds[1][i].y());
+        }
+      }
     }
   }
 }
@@ -152,6 +213,7 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
 
   size_t i = 0;
   int crosswalk_count = 0;             // Counter for crosswalk subtype
+  int road_element_count = 0;          // Counter for road elements
   crosswalk_polygons.polygons.clear(); // Clear the crosswalk polygons
   road_elements.polygons.clear();      // Clear the road elements
 
@@ -359,6 +421,7 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
 
     else
     {
+      road_element_count++; // Increment the road element counter
       // For each bound (left and right), create a marker
       for (const auto &bound : bounds)
       {
@@ -391,4 +454,5 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
     }
   }
   std::cout << blue << "----> Number of crosswalk lanelets: " << crosswalk_count << reset << std::endl;
+  std::cout << blue << "----> Number of road elements: " << road_element_count << reset << std::endl;
 }
