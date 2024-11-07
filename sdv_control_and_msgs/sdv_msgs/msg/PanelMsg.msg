@@ -1,0 +1,8 @@
+std_msgs/Bool wiper
+std_msgs/Bool horn
+std_msgs/Bool right_upper_front_light
+std_msgs/Bool left_upper_front_light
+std_msgs/Bool right_down_front_light
+std_msgs/Bool left_down_front_light
+std_msgs/Bool back
+std_msgs/ByteMultiArray xboxcontrol

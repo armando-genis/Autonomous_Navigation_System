@@ -1,0 +1,45 @@
+/**:
+  ros__parameters:
+    frequency: 100
+    init_pose: [0.0, 0.0, 0.0] # x, y, psi
+    init_pose: [-63.0, -99.0, 3.1415] # x, y, psi
+    parent_frame: "odom"
+    child_frame: "base_link"
+
+# First Order Feedback Linearization 1-DOF PID Controller for the VTec SDC1
+sdc1_vel_pid_node:
+  ros__parameters:
+    Kp: 1.0
+    Ki: 0.01
+    Kd: 0.2 #0.01
+    D_MAX: 180
+
+# First Order Feedback Linearization 1-DOF ASMC Controller for the VTec SDC1
+sdc1_vel_asmc_node:
+  ros__parameters:
+    lambda1: 1.0
+    lambda2: 1.0
+    K2: 1.0
+    K_alpha: 1.0
+    K1_init: 0.0
+    K_min: 0.0
+    mu: 0.01
+    D_MAX: 180
+
+sdc1_vel_aitsmc_node:
+  ros__parameters:
+    lambda: 2.0
+    beta: 0.9
+    K2: 0.3
+    K_alpha: 0.5
+    K1_init: 0.0
+    K_min: 0.001
+    mu: 0.1
+    D_MAX: 180
+
+# Stanley Controller Params
+stanley_controller_node:
+  ros__parameters:
+    K: 1.0 # drives you to path faster, induces overshoot
+    K_soft: 5.0 # softens overshoot
+    DELTA_SAT: [0.5922, -0.5264] # new car limits in radians

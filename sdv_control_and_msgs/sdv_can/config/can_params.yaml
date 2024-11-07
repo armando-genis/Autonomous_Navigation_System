@@ -1,0 +1,4 @@
+/can_devices/**:
+  ros__parameters:
+    channel: "can0"
+    bitrate: 125000

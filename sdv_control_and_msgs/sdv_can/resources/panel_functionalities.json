@@ -1,0 +1,70 @@
+{
+    "panelMov":{
+        "frenado":[[5,16],""], 
+        "encendido":[[5,17],""],
+        "apagado":[[5,18],""],
+        "estacionario":[[5,19],""],
+        "aceleracion":[[5,20],""],
+        "sin_cambios":[[5,21],""],
+        "reset":[[5,10],""]
+    },
+    "panelDet":{
+        "giro_prominente_derecha":[[6,16],""],
+        "giro_prominente_izquierda":[[6,17],""],
+        "gran_trafico":[[6,18],""],
+        "giro_repentino_derecha":[[6,19],""],
+        "giro_repentino_izquierda":[[6,21],""],
+        "reset":[[6,10],""]
+    },
+    "driveMode":{
+        "autonomo":[[7,1],""],
+        "manual":[[7,0],""]
+    },
+    "seat_sensor":{
+        "1":[[22,1],""],
+        "0":[[22,0],""]
+    },
+    "safetyMode":{
+        "on":[[9,16],""],
+        "off":[[9,10],""]
+    },
+    "objectNotification":{
+        "close":[[16,16],"nearby_object"],
+        "far":[[16,17],"distant_object"],
+        "nothing":[[16,10],""]
+    },
+    "recognizeTraffic":{
+        "stop":[[17,16],"stop_signal"],
+        "pedestrian":[[17,17],"pedestrian_signal"],
+        "nothing":[[17,10],""]
+    },
+    "detectLane":{
+        "in_lane":[[18,16],""],
+        "out_lane":[[18,17],""],
+        "no_lane":[[18,18],""]
+    },
+    "drive_audio_mode":{
+        "1": "modo_autonomo",
+        "0": "modo_manual"
+    },
+    "emergency_audio_mode":{
+        "1": "off",
+        "0": ""
+    },
+    "driver_present_audio_mode":{
+        "1": "good_morning_sir",
+        "0": ""
+    },
+    "song_audio_mode":{
+        "Activated": "song_tec",
+        "Deactivated": ""
+    },
+    "safety_mode":{
+        "Activated": [9,16],
+        "Deactivated": [9,10]
+    },
+    "show_mode":{
+        "Activated": [21,16],
+        "Deactivated": [21,10]
+    }
+}

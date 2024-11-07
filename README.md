@@ -144,6 +144,11 @@ colcon build --packages-select velodyne
 colcon build --packages-select lidar_imu_sync
 colcon build --packages-select mapping_localization_launch
 colcon build --packages-select polygon_msgs
+colcon build --packages-select sdv_msgs
+source install/setup.bash
+colcon build --packages-select sdv_can
+colcon build --packages-select sdv_control
+
 colcon build --packages-select lanelet2_core
 colcon build --packages-select lanelet2_maps
 colcon build --packages-select lanelet2_io
@@ -156,9 +161,15 @@ source install/setup.bash
 colcon build
 ```
 
-## → 🏅 lidar config 
+## → 🏅 Lidar config 
 `sudo ifconfig enp2s0 10.66.171.101`
 
+## → 🏅 Can start
+ Inside the `ros2_ws/src/Autonomous_Navigation_System/` folder:
+ ```bash
+chmod +x start.sh
+sudo ./start.sh
+```
 ## → 🏅 IMU Permistion
 `sudo chmod 666 /dev/ttyUSB0`
 
@@ -206,6 +217,7 @@ After updating the file, launch the system with the following commands:
 ros2 launch global_navigation_launch lidar_subprocessing.launch.py
 ros2 launch robot_description localization_display.launch.py
 ros2 launch global_navigation_launch lidar_localization_ros2.launch.py
+ros2 launch global_navigation_launch can_and_control.launch.py
 ```
 - `lidar_subprocessing.launch.py`:
 This launch file compensates for the LiDAR setup on the car 🚗, applying a 0.2-radian rotation adjustment on the Y-axis. Additionally, it creates a buffer to synchronize LiDAR and IMU messages, ensuring precise alignment for accurate localization.
@@ -215,6 +227,10 @@ This file sets up the transform (tf) hierarchy, where the velodyne frame 🌐 ac
 
 - `lidar_localization_ros2.launch.py`:
 This command launches the LiDAR-based localization process, integrating data from LiDAR and IMU sensors to create a real-time map 🗺️, enabling precise positioning within the environment.
+
+- `can_and_control.launch.py`:
+This command launch the control and the comunication with the can bus 0. 
+
 
 
 ## → 🛣️ Launchers for HD map & waypoints routing

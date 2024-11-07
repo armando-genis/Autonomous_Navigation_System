@@ -1,0 +1,13 @@
+std_msgs/Bool connected
+std_msgs/Int16 back
+std_msgs/Float64 leftx
+std_msgs/Float64 lefty
+std_msgs/Float64 right_trigger
+std_msgs/Int16 a
+std_msgs/Int16 b
+std_msgs/Int16 x 
+std_msgs/Int16 y 
+std_msgs/Int16 dpad_up
+std_msgs/Int16 dpad_down
+std_msgs/Int16 dpad_left
+std_msgs/Int16 dpad_right
