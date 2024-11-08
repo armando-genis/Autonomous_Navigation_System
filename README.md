@@ -157,6 +157,7 @@ colcon build --packages-select lanelet2_traffic_rules
 colcon build --packages-select lanelet2_routing
 colcon build --packages-select traffic_information_msgs
 colcon build --packages-select lanelet2_validation
+colcon build --packages-select target_waypoint_index
 source install/setup.bash
 colcon build
 ```
@@ -235,9 +236,11 @@ This command launch the control and the comunication with the can bus 0.
 
 ## → 🛣️ Launchers for HD map & waypoints routing
 ```bash
-ros2 launch map_visualizer osm_visualizer.launch.py
-ros2 launch waypoints_routing waypoints.launch.py
+ros2 launch map_visualizer osm_visualizer.launch.py #launch the map, crosswalks and the grid map
+ros2 launch waypoints_routing waypoints.launch.py #launch the path
+ros2 launch target_waypoint_index target_waypoint.launch.py #launch the waypoint target base on the lookahead max and lookahead min
 ```
+
 
 ## → 🎥 Launchers rviz2
 

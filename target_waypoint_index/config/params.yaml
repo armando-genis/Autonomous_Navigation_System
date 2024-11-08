@@ -1,0 +1,6 @@
+target_waypoint_index_node:
+  ros__parameters:
+    lookahead_min: 5.0
+    lookahead_max: 15.0
+    mps_alpha: 1.5
+    mps_beta: 3.5

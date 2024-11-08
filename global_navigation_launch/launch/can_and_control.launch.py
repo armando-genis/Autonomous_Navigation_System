@@ -67,6 +67,8 @@ def generate_launch_description():
         parameters=[car_params]
     )
 
+    # ==========================> CAN NODE <==========================
+
     sdv_control_launch = launch_ros.actions.Node(
         package='sdv_can',
         executable='sdv_can_node',
@@ -87,8 +89,11 @@ def generate_launch_description():
     
     return launch.LaunchDescription([
 
+        # CAN nodes
         sdv_control_launch,
         sdv_joy,
+
+        # Control nodes
         is_sim,
         odometry_source, 
         # Log the value of is_simulation for debugging purposes
