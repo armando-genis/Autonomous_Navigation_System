@@ -10,7 +10,7 @@ def generate_launch_description():
     paramsConfig = os.path.join(get_package_share_directory('target_waypoint_index'),'config','params.yaml')
 
 
-    publisher_node_planner = launch_ros.actions.Node(
+    waypoints_index_node = launch_ros.actions.Node(
         package='target_waypoint_index',
         executable='target_waypoint_index_node',
         name='target_waypoint_index_node',
@@ -20,5 +20,5 @@ def generate_launch_description():
     )
     
     return launch.LaunchDescription([
-        publisher_node_planner
+        waypoints_index_node
     ])

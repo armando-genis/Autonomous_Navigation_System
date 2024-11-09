@@ -241,6 +241,12 @@ ros2 launch waypoints_routing waypoints.launch.py #launch the path
 ros2 launch target_waypoint_index target_waypoint.launch.py #launch the waypoint target base on the lookahead max and lookahead min
 ```
 
+to launch everthing reladed to the map and waypoints:
+```bash
+ros2 launch global_navigation_launch map_elements.launch.py
+```
+
+
 
 ## → 🎥 Launchers rviz2
 

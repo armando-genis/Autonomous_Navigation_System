@@ -19,6 +19,8 @@ find_package(lanelet2_routing)
 find_package(lanelet2_traffic_rules)
 find_package(lanelet2_validation)
 find_package(polygon_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -46,6 +48,7 @@ ament_target_dependencies(waypoints_routing_node
   lanelet2_traffic_rules
   lanelet2_validation
   polygon_msgs
+  tf2_ros
 )
 
 target_include_directories(waypoints_routing_node PUBLIC

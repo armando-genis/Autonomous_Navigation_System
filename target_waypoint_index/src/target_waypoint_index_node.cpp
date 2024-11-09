@@ -199,11 +199,12 @@ void target_waypoint_index_node::marketTargetWaypoint()
     marker.pose.position.x = waypoints[target_waypoint](0);
     marker.pose.position.y = waypoints[target_waypoint](1);
     marker.pose.position.z = waypoints[target_waypoint](2);
-    marker.pose.orientation.x = 0.0;
-    marker.pose.orientation.y = 0.0;
-    marker.pose.orientation.z = 0.0;
-    marker.pose.orientation.w = 1.0;
-    marker.scale.x = 1.1;
+
+    tf2::Quaternion q;
+    q.setRPY(0, 0, waypoints[target_waypoint](3));
+    marker.pose.orientation = tf2::toMsg(q);
+
+    marker.scale.x = 2.1;
     marker.scale.y = 1.1;
     marker.scale.z = 1.1;
     marker.color.r = 1.0;

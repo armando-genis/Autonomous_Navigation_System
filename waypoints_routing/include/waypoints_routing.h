@@ -15,6 +15,7 @@
 #include <lanelet2_core/geometry/Point.h>
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_traffic_rules/TrafficRules.h>
+#include <tf2/LinearMath/Quaternion.h>
 
 #include <boost/optional/optional_io.hpp>
 #include <vector>

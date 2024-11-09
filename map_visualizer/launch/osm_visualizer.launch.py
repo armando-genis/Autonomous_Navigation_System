@@ -17,16 +17,7 @@ def generate_launch_description():
         additional_env={'RCUTILS_CONSOLE_OUTPUT_FORMAT': "{message}"},
         output='screen',
     )
-
-    occupancy_map_node = launch_ros.actions.Node(
-        package='map_visualizer',
-        executable='occupancy_pub',
-        name='occupancy_pub',
-        additional_env={'RCUTILS_CONSOLE_OUTPUT_FORMAT': "{message}"},
-        output='screen',
-    )
     
     return launch.LaunchDescription([
-        map_visualizer_node,
-        occupancy_map_node
+        map_visualizer_node
     ])
