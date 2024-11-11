@@ -16,8 +16,6 @@ target_waypoint_index_node::target_waypoint_index_node(/* args */) : Node("targe
     waypoints_subscription_ = this->create_subscription<visualization_msgs::msg::MarkerArray>(
         "/waypoints_routing", 10, std::bind(&target_waypoint_index_node::waypoints_callback, this, std::placeholders::_1));
 
-    target_waypoint_index_pub_ = this->create_publisher<std_msgs::msg::Int32>("target_waypoint_index", 10);
-
     timer_ = this->create_wall_timer(std::chrono::milliseconds(200), std::bind(&target_waypoint_index_node::pub_callback, this));
 
     // for debugging

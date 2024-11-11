@@ -61,7 +61,6 @@ private:
 
     // Subscriptions & Publishers
     rclcpp::TimerBase::SharedPtr timer_;
-    rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr target_waypoint_index_pub_;
     rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr waypoints_subscription_;
 
     // for debugging
