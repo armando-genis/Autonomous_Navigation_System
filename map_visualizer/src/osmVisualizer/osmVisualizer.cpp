@@ -246,6 +246,9 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
     if (ll.hasAttribute(lanelet::AttributeName::Subtype) &&
         ll.attribute(lanelet::AttributeName::Subtype).value() == lanelet::AttributeValueString::Crosswalk)
     {
+
+      // cout the id of the crosswalk
+      std::cout << "Crosswalk id: " << ll.id() << std::endl;
       polygon_msgs::msg::Polygon2D base_polygon;
       traffic_information_msgs::msg::RoadElements crosswalks_element;
 
@@ -284,7 +287,7 @@ void OsmVisualizer::fill_marker(lanelet::LaneletMapPtr &t_map)
 
       crosswalks_element.points.push_back(crosswalks_element.points[0]);
 
-      crosswalks_element.id = crosswalk_count; // Set the ID for the crosswal
+      crosswalks_element.id = ll.id(); // Set the ID for the crosswal
 
       crosswalks_element.type = ll.attribute(lanelet::AttributeName::Subtype).value();
 

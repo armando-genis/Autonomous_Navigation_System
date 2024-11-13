@@ -23,7 +23,7 @@ public:
   {
 
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>);
-    pcl::io::loadPCDFile<pcl::PointXYZI>("/home/genis/Downloads/LOAM/cloudSurf.pcd", *cloud_);
+    pcl::io::loadPCDFile<pcl::PointXYZI>("/home/genis/Downloads/cloudSurf.pcd", *cloud_);
     pcl::toROSMsg(*cloud_.get(), ros_pc2_);
     publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/pcd", 10);
     timer_ = this->create_wall_timer(5000ms, std::bind(&PcdtoPointcloud2::timer_callback, this));
