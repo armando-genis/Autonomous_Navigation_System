@@ -1,6 +1,6 @@
 velodyne_driver_node:
     ros__parameters:
-        device_ip: 10.66.171.100
+        device_ip: 192.168.1.2
         gps_time: false
         time_offset: 0.0
         enabled: true

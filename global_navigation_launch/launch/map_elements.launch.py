@@ -52,6 +52,6 @@ def generate_launch_description():
     return launch.LaunchDescription([
         map_visualizer_node,
         occupancy_map_node, 
-        publisher_node_planner,
-        waypoints_index_node
+        publisher_node_planner
+        # waypoints_index_node
     ])
