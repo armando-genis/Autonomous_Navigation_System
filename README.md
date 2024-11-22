@@ -11,7 +11,6 @@ sudo apt install libpcl-dev
 sudo apt-get install libpcap-dev
 sudo apt install can-utils
 sudo apt-get install libqt5serialport5-dev
-
 sudo apt-get install libpugixml-dev
 sudo apt-get install libgeographic-dev geographiclib-tools
 
@@ -148,7 +147,8 @@ colcon build --packages-select sdv_msgs
 source install/setup.bash
 colcon build --packages-select sdv_can
 colcon build --packages-select sdv_control
-
+colcon build --packages-select mrt_cmake_modules
+source install/setup.bash
 colcon build --packages-select lanelet2_core
 colcon build --packages-select lanelet2_maps
 colcon build --packages-select lanelet2_io
