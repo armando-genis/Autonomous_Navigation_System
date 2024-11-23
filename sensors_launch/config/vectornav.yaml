@@ -2,6 +2,7 @@ vectornav:
   ros__parameters:
     port: "/dev/ttyUSB0"
     baud: 921600
+    adjust_ros_timestamp: True
     reconnect_ms: 500
     # Reference vnproglib-1.2.0.0 headers for enum definitions
     # Async Output Type (ASCII)
@@ -26,7 +27,7 @@ vectornav:
     errorMode: 1                     # ERRORMODE_SEND
     # Binary output register 1
     BO1:
-      asyncMode: 3                   # ASYNCMODE_BOTH
+      asyncMode: 1                   # ASYNCMODE_BOTH
       rateDivisor: 4
       commonField: 0x7FFF
       timeField: 0x0000              # TIMEGROUP_NONE

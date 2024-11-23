@@ -1,0 +1,12 @@
+vectornav:
+  ros__parameters:
+    port: "/dev/ttyUSB0"
+    baud: 921600
+    AsyncDataOutputFrequency: 100  # Base frequency
+    BO1:
+      asyncMode: 3
+      rateDivisor: 10  # Further reduce output frequency to 0.25 Hz
+      commonField: 0x0001  # Timestamp only
+      imuField: 0x0000
+      attitudeField: 0x0000
+      gps2Field: 0x0000
