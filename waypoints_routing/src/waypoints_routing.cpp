@@ -2,7 +2,9 @@
 
 waypoints_routing::waypoints_routing(/* args */) : Node("waypoints_routing_node")
 {
-    this->declare_parameter("map_path", "/home/atakan/Downloads/Town10.osm");
+    this->declare_parameter("map_path", "/home/genis/Downloads/Town10.osm");
+    this->declare_parameter("start_lanelet_id", 0);
+    this->declare_parameter("end_lanelet_id", 0);
     if (!readParameters())
         rclcpp::shutdown();
 
@@ -24,6 +26,12 @@ waypoints_routing::waypoints_routing(/* args */) : Node("waypoints_routing_node"
         point.y() = point.attribute("local_y").asDouble().value();
     }
 
+    RCLCPP_INFO(this->get_logger(), "\033[1;32m----> waypoints_routing_node initialized.\033[0m");
+    // cout the paraments in blue
+
+    std::cout << blue << "start_lanelet_id: " << start_lanelet_id << reset << std::endl;
+    std::cout << blue << "end_lanelet_id: " << end_lanelet_id << reset << std::endl;
+
     lanelet_routing_test(map);
 }
 
@@ -36,6 +44,18 @@ bool waypoints_routing::readParameters()
     if (!this->get_parameter("map_path", map_path_))
     {
         std::cout << "Failed to read parameter 'map_path' " << std::endl;
+        return false;
+    }
+
+    if (!this->get_parameter("start_lanelet_id", start_lanelet_id))
+    {
+        std::cout << "Failed to read parameter 'start_lanelet_id' " << std::endl;
+        return false;
+    }
+
+    if (!this->get_parameter("end_lanelet_id", end_lanelet_id))
+    {
+        std::cout << "Failed to read parameter 'end_lanelet_id' " << std::endl;
         return false;
     }
     return true;
@@ -52,8 +72,8 @@ void waypoints_routing::lanelet_routing_test(lanelet::LaneletMapPtr &map)
     {
         std::cout << green << "Routing graph built successfully" << reset << std::endl;
 
-        lanelet::ConstLanelet startLanelet = map->laneletLayer.get(7);
-        lanelet::ConstLanelet endLanelet = map->laneletLayer.get(721);
+        lanelet::ConstLanelet startLanelet = map->laneletLayer.get(start_lanelet_id);
+        lanelet::ConstLanelet endLanelet = map->laneletLayer.get(end_lanelet_id);
 
         // Check if the goal lanelet is reachable from the start lanelet
         double maxRoutingCost = 500.0;
@@ -81,7 +101,9 @@ void waypoints_routing::lanelet_routing_test(lanelet::LaneletMapPtr &map)
                 int waypoint_id = 0;
                 for (const auto &lanelet : shortestPath)
                 {
-                    auto points = lanelet.centerline2d();
+                    auto points = lanelet.centerline3d();
+                    // auto points = lanelet.centerline2d();
+
                     for (size_t i = 0; i < points.size() - 1; ++i)
                     {
 
@@ -113,7 +135,7 @@ void waypoints_routing::lanelet_routing_test(lanelet::LaneletMapPtr &map)
                         // Set the position for the waypoint
                         waypoint_marker.pose.position.x = point.x();
                         waypoint_marker.pose.position.y = point.y();
-                        waypoint_marker.pose.position.z = 0.0;
+                        waypoint_marker.pose.position.z = point.z();
 
                         // Set the orientation based on the calculated yaw
                         tf2::Quaternion quaternion;

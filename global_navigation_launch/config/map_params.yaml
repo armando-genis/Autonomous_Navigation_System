@@ -1,0 +1,9 @@
+waypoints_routing_node:
+  ros__parameters:
+    map_path: "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/map_visualizer/osms/open_house.osm"
+    start_lanelet_id: 7
+    end_lanelet_id: 286
+
+osm_visualizer:
+  ros__parameters:
+    map_path: "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/map_visualizer/osms/open_house.osm"

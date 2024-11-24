@@ -12,7 +12,7 @@ def generate_launch_description():
         executable='osm_visualizer',
         name='osm_visualizer',
         parameters=[
-            {"map_path": "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/map_visualizer/osms/mty_map_full_2.osm"}
+            {"map_path": "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/map_visualizer/osms/open_house.osm"}
         ],
         additional_env={'RCUTILS_CONSOLE_OUTPUT_FORMAT': "{message}"},
         output='screen',

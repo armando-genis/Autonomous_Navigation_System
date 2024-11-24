@@ -38,6 +38,9 @@ private:
     std::string purple = "\033[1;35m";
     std::string reset = "\033[0m";
 
+    int start_lanelet_id = 0;
+    int end_lanelet_id = 0;
+
     // Parameters
     std::string map_path_;
     visualization_msgs::msg::MarkerArray graph_waypoint_markers;
