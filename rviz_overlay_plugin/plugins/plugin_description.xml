@@ -1,0 +1,7 @@
+<library path="rviz_overlay_plugin">
+  <class name="rviz_overlay_plugin::OverlayDisplay"
+         type="rviz_overlay_plugin::OverlayDisplay"
+         base_class_type="rviz_common::Display">
+    <description>Speedometer overlay display for RViz2.</description>
+  </class>
+</library>
