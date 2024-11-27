@@ -33,7 +33,7 @@ namespace rviz_overlay_plugin
         Q_OBJECT
     public:
         OverlayDisplay()
-            : timer_value_(0.0), update_required_(false), gear_index_(-1)
+            : timer_value_(0.0), update_required_(false), gear_index_(-1), percentage_(0)
         {
             // Get screen size to set width and height relative to the screen
             QScreen *screen = QGuiApplication::primaryScreen();
@@ -129,6 +129,15 @@ namespace rviz_overlay_plugin
                     update_required_ = true;
                 });
 
+            percentage_subscription_ = context_->getRosNodeAbstraction().lock()->get_raw_node()->create_subscription<std_msgs::msg::Int32>(
+                "/percentage", rclcpp::SystemDefaultsQoS(),
+                [this](const std_msgs::msg::Int32::SharedPtr msg)
+                {
+                    std::lock_guard<std::mutex> lock(mutex_);
+                    percentage_ = std::clamp(msg->data, 0, 100); // Ensure percentage stays between 0 and 100
+                    update_required_ = true;
+                });
+
             update_required_ = true;
         }
 
@@ -136,6 +145,7 @@ namespace rviz_overlay_plugin
         {
             subscription_.reset(); // Unsubscribe when the display is disabled
             gear_subscription_.reset();
+            percentage_subscription_.reset();
         }
 
         // Process messages received from the topic
@@ -205,7 +215,7 @@ namespace rviz_overlay_plugin
             painter.setFont(font);
             painter.setPen(Qt::white); // Set text color to gray for labels
 
-            int labelY = height_ - 100;                                       // Y position below the circle
+            int labelY = height_ - 320;                                       // Y position below the circle
             int labelSpacing = width_ / 5;                                    // Space between each label (one-fifth of the width)
             int startX = (width_ - (labelSpacing * (labels.size() - 1))) / 2; // Calculate starting X position for evenly spaced labels
 
@@ -227,6 +237,63 @@ namespace rviz_overlay_plugin
                 painter.setPen(Qt::white); // Set text color to gray for labels
                 painter.drawText(labelRect, Qt::AlignCenter, labels[i]);
             }
+
+            // Draw the progress bar below the labels
+            int bar_margin = 100; // Margin for the progress bar
+            int bar_width = width_ - 2 * bar_margin;
+            int bar_height = 30;                                // Height of the progress bar
+            int bar_y = labelY + 100;                           // Position below the labels
+            int filled_width = (percentage_ * bar_width) / 100; // Calculate filled width based on percentage_
+
+            QRect bar_background(bar_margin, bar_y, bar_width, bar_height);
+            QRect bar_filled(bar_margin, bar_y, filled_width, bar_height);
+
+            int corner_radius = 10; // Corner radius for rounded rectangles
+
+            // Draw the progress bar border with rounded corners
+            QColor border_color = QColor(0, 0, 0, 255);                            // Black border with full opacity
+            painter.setPen(QPen(border_color, 1));                                 // Set border color and thickness
+            painter.setBrush(Qt::NoBrush);                                         // No fill for the border
+            painter.drawRoundedRect(bar_background, corner_radius, corner_radius); // Rounded border
+
+            // Draw the progress bar background with rounded corners
+            QColor bar_bg_color = QColor(200, 200, 200, 50); // Light gray with some transparency
+            painter.setBrush(bar_bg_color);
+            painter.setPen(Qt::NoPen);                                             // No border for the background
+            painter.drawRoundedRect(bar_background, corner_radius, corner_radius); // Rounded background
+
+            // Draw the filled part of the progress bar with rounded corners
+            QColor bar_fill_color = QColor(230, 230, 230, 80); // Green
+            painter.setBrush(bar_fill_color);
+            QRect filled_rect(bar_margin, bar_y, filled_width, bar_height);
+
+            // Ensure the filled part has rounded corners only if it fills the entire width
+            if (filled_width < bar_width)
+            {
+                // Filled part without rounded corners on the right side
+                painter.drawRect(filled_rect);
+            }
+            else
+            {
+                // Fully filled bar with rounded corners
+                painter.drawRoundedRect(filled_rect, corner_radius, corner_radius);
+            }
+
+            // Draw the percentage text on the progress bar
+            // font.setPointSize(20);
+            // font.setBold(true);
+            // painter.setFont(font);
+            // painter.setPen(Qt::black);
+            // painter.drawText(bar_background, Qt::AlignCenter, QString("%1%").arg(percentage_));
+
+            // Add a little green circle at the top-left corner
+            int circle_radius = 10;                     // Radius of the circle
+            int circle_x = width_ - circle_radius - 30; // Fixed margin for the circle (distance from left)
+            int circle_y = 30;                          // Fixed margin for the circle (distance from top)
+
+            painter.setBrush(QColor(50, 200, 50, 255)); // Green color for the circle
+            painter.setPen(Qt::NoPen);                  // No border for the circle
+            painter.drawEllipse(QPoint(circle_x, circle_y), circle_radius, circle_radius);
 
             painter.end();
             pixelBuffer->unlock();
@@ -309,10 +376,12 @@ namespace rviz_overlay_plugin
         Ogre::OverlayContainer *panel_;
         std::mutex mutex_;
         int gear_index_;
+        int percentage_; // Stores the percentage value for the progress bar
 
         // ROS2 subscription
         rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr subscription_;
         rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr gear_subscription_;
+        rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr percentage_subscription_;
     };
 
 } // namespace rviz_overlay_plugin
