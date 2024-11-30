@@ -2,6 +2,8 @@
 #include <QFont>
 #include <QGuiApplication>
 #include <QScreen>
+#include <QTime>
+
 #include <rviz_common/ros_topic_display.hpp>
 #include <rviz_common/properties/int_property.hpp>
 #include <rviz_common/properties/float_property.hpp>
@@ -285,6 +287,22 @@ namespace rviz_overlay_plugin
             // painter.setFont(font);
             // painter.setPen(Qt::black);
             // painter.drawText(bar_background, Qt::AlignCenter, QString("%1%").arg(percentage_));
+
+            // Draw the current time to the left of the green circle
+            QTime currentTime = QTime::currentTime();
+            QString timeText = currentTime.toString("hh:mm"); // Format time as HH:MM
+
+            QFont timeFont = painter.font();
+            timeFont.setPointSize(18); // Adjust the font size for better readability
+            timeFont.setBold(false);
+            painter.setFont(timeFont);
+            painter.setPen(Qt::white); // Set text color to white for good contrast
+
+            // Adjust position for time text to be left of the circle
+            int timeTextX = width_ - 80;                            // Position slightly left of the green circle
+            int timeTextY = 35;                                     // Align vertically with the circle
+            QRect timeRect(timeTextX - 80, timeTextY - 15, 80, 30); // Adjust position and size for text
+            painter.drawText(timeRect, Qt::AlignRight, timeText);
 
             // Add a little green circle at the top-left corner
             int circle_radius = 10;                     // Radius of the circle

@@ -10,7 +10,7 @@ OsmVisualizer::OsmVisualizer() : Node("OsmVisualizer")
 
   publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("/hd_map", 10);
   array_publisher_ = this->create_publisher<std_msgs::msg::Float64MultiArray>("/array", 10);
-  timer_ = this->create_wall_timer(700ms, std::bind(&OsmVisualizer::timer_callback, this));
+  timer_ = this->create_wall_timer(200ms, std::bind(&OsmVisualizer::timer_callback, this));
 
   polygon_publisher_ = this->create_publisher<polygon_msgs::msg::Polygon2DCollection>("/crosswalk_polygons", 10);
   road_elements_publisher_ = this->create_publisher<traffic_information_msgs::msg::RoadElementsCollection>("/road_elements", 10);
@@ -53,12 +53,32 @@ bool OsmVisualizer::readParameters()
 
 void OsmVisualizer::timer_callback()
 {
-  publisher_->publish(m_marker_array);
-  array_publisher_->publish(m_array);
+  // publish until one subcribre that is the rviz2 for vizualisation and publish only once
+  if (publisher_->get_subscription_count() > 0 && m_first)
+  {
+    publisher_->publish(m_marker_array);
+    m_first = false;
+  }
+  // publish until one subcribre that is the ocupanccy grid code and publish only once
+  if (array_publisher_->get_subscription_count() > 0 && m_second)
+  {
+    array_publisher_->publish(m_array);
+    m_second = false;
+  }
+
   if (!crosswalk_polygons.polygons.empty())
   {
-    polygon_publisher_->publish(crosswalk_polygons);
-    road_elements_publisher_->publish(road_elements);
+    // publish until one subcribre that is the rviz2 for vizualisation and publish only once
+    if (polygon_publisher_->get_subscription_count() > 0 && m_third)
+    {
+      polygon_publisher_->publish(crosswalk_polygons);
+      m_third = false;
+    }
+    // publish until one subcribre
+    if (road_elements_publisher_->get_subscription_count() > 0)
+    {
+      road_elements_publisher_->publish(road_elements);
+    }
   }
 }
 

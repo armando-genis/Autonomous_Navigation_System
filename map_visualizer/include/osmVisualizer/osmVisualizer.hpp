@@ -74,6 +74,10 @@ private:
   std::string purple = "\033[1;35m";
   std::string reset = "\033[0m";
 
+  bool m_first{true};
+  bool m_second{true};
+  bool m_third{true};
+
   // params
   std::string map_path_;
   bool enable_inc_path_points_;

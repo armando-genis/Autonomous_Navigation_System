@@ -123,6 +123,8 @@ When creating a `Lanelet2Map` in the Vector Map Builder, follow these steps to c
 
 > **Note:** When exporting the map, you may encounter an error indicating that the component `x` or `y` is negative. This error can be safely ignored, as it does not impact the map creation process. Proceed with creating the map even if these errors appear.
 
+when finding black spaces in the rout is beacuse the lack of points you can add points with insert point with linestring
+
 
 ## → 📥 Building
 
