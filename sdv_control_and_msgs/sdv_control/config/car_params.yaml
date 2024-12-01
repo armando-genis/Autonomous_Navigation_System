@@ -6,6 +6,17 @@
     parent_frame: "odom"
     child_frame: "base_link"
 
+# PID Controller for the VTec SDV
+vel_pid_node:
+  ros__parameters:
+    Kp: 5.0
+    Ki: 0.01
+    Kd: 0.2
+    U_MAX: 1.0
+    U_MIN: -1.0
+    enable_ramp: true
+    ramp_rate: 1.
+
 # First Order Feedback Linearization 1-DOF PID Controller for the VTec SDC1
 sdc1_vel_pid_node:
   ros__parameters:

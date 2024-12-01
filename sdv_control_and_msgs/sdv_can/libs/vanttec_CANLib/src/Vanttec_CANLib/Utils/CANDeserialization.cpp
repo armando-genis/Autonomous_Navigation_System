@@ -34,7 +34,7 @@ uint32_t deserialize_long(const uint8_t *data) {
     out |= data[2] << (8);
     out |= data[3] & 0xff;
 
-    return vanttec_ntohl(out);
+    return vanttec_htonl(out);
 }
 #ifdef __cplusplus
 }

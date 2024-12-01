@@ -9,9 +9,6 @@
  * */
 
 #include "controllers/feedback_linearization/PID_based/first_order/fblin_pid.hpp"
-#include <cfloat>
-
-float U_AUX_MAX = FLT_MAX;
 
 PIDLin::PIDLin( float sample_time, float k_p, float k_i, float k_d,
                 float u_max, const DOFControllerType_E& type) : 

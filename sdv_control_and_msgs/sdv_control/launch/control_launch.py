@@ -27,6 +27,13 @@ def generate_launch_description():
                      vectornav (vn) or from the robot localization pkg (rl)'
    )
 
+   # For simulations (config in sdv_control)
+   rviz_config = os.path.join(
+      get_package_share_directory('sdv_control'),
+      'launch/rviz_cfg',
+
+      'sdv_sim_wpnts.rviz'
+   )
 
    car_params = os.path.join(
       get_package_share_directory('sdv_control'),
@@ -47,6 +54,30 @@ def generate_launch_description():
                   ]
    )
 
+   asmc_node = Node(
+      package='sdv_control',
+      executable='sdc1_vel_asmc_node',
+      output='screen',
+      name='sdc1_vel_asmc_node',
+      parameters=[
+                  # {'frequency': LaunchConfiguration('frequency')},
+                  {'is_simulation': LaunchConfiguration('is_simulation')},
+                  car_params
+                  ]
+   )
+
+   aitsmc_node = Node(
+      package='sdv_control',
+      executable='sdc1_vel_aitsmc_node',
+      output='screen',
+      name='sdc1_vel_aitsmc_node',
+      parameters=[
+                  # {'frequency': LaunchConfiguration('frequency')},
+                  {'is_simulation': LaunchConfiguration('is_simulation')},
+                  car_params
+                  ]
+   )
+
    car_guidance_node = Node(
       package='sdv_control',
       executable='stanley_controller_node',
@@ -59,6 +90,26 @@ def generate_launch_description():
                   ]
    )
 
+   tf2_node = Node(
+      package='sdv_control',
+      executable='car_tf2_broadcast_node',
+      namespace="",
+      name='car_tf2_broadcast_node',
+      parameters=[
+                  # {'frequency': LaunchConfiguration('frequency')},
+                  car_params
+                  ],
+      condition=IfCondition(LaunchConfiguration('is_simulation'))
+   )
+
+   rviz = Node(
+      package='rviz2',
+      executable='rviz2',
+      name='rviz2',
+      arguments=['-d', rviz_config],
+      # condition=IfCondition(LaunchConfiguration('is_simulation'))
+   )
+
    waypoint_handler = Node(
       package='sdv_control',
       executable='waypoint_handler.py',
@@ -66,6 +117,38 @@ def generate_launch_description():
       output="screen",
       name='waypoint_handler',
       parameters=[car_params]
+   )
+
+   sdv_loc_launch = IncludeLaunchDescription(
+      PythonLaunchDescriptionSource([
+            PathJoinSubstitution([
+               FindPackageShare('sdv_localization'),
+               'launch',
+               'sdv_localization.launch.py'
+            ])
+      ]),
+      launch_arguments={'is_simulation': LaunchConfiguration('is_simulation'),
+                        'odometry_source': LaunchConfiguration('odometry_source')}.items()
+   )
+
+   sdv_description_launch = IncludeLaunchDescription(
+      PythonLaunchDescriptionSource([
+            PathJoinSubstitution([
+               FindPackageShare('sdv_description'),
+               'launch',
+               'rviz.launch.py'
+            ])
+      ])
+   )
+
+   sdv_can_launch = IncludeLaunchDescription(
+      PythonLaunchDescriptionSource([
+            PathJoinSubstitution([
+               FindPackageShare('sdv_can'),
+               'launch',
+               'can_devices.launch.py'
+            ])
+      ]),
    )
 
    return LaunchDescription([
@@ -82,8 +165,16 @@ def generate_launch_description():
          msg="Running in real robot mode."
       ),
 
-
-      pid_node,      
+      # rviz,
+      # aitsmc_node,
+      # asmc_node,
+      pid_node,
+      # tf2_node,
+      # sdv_description_launch,
+      # sdv_loc_launch,
+      
+      # sdv_can_launch,
+      
       waypoint_handler,
       car_guidance_node,
    ])

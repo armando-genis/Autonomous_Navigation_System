@@ -2,3 +2,9 @@
   ros__parameters:
     channel: "can0"
     bitrate: 125000
+
+can_node_sdv:
+  ros__parameters:
+    steer_enable: true
+    brake_enable: true
+    throttle_enable: true
