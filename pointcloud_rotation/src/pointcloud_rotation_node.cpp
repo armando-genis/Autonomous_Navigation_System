@@ -59,6 +59,12 @@ pointcloud_rotation_node::pointcloud_rotation_node(/* args */) : Node("pointclou
     ROI_MAX_POINT = Eigen::Vector4f(roi_max_x_, roi_max_y_, roi_max_z_, 1);
     ROI_MIN_POINT = Eigen::Vector4f(roi_min_x_, roi_min_y_, roi_min_z_, 1);
 
+    rotation_matrix_ = Eigen::Matrix4f::Identity();
+    rotation_matrix_(0, 0) = cos(sensor_rotation_y_);
+    rotation_matrix_(0, 2) = sin(sensor_rotation_y_);
+    rotation_matrix_(2, 0) = -sin(sensor_rotation_y_);
+    rotation_matrix_(2, 2) = cos(sensor_rotation_y_);
+
     RCLCPP_INFO(this->get_logger(), "\033[1;34m---->voxel_leaf_size_x: %f \033[0m", voxel_leaf_size_x_);
     RCLCPP_INFO(this->get_logger(), "\033[1;34m---->voxel_leaf_size_y: %f \033[0m", voxel_leaf_size_y_);
     RCLCPP_INFO(this->get_logger(), "\033[1;34m---->voxel_leaf_size_z: %f \033[0m", voxel_leaf_size_z_);
@@ -95,15 +101,8 @@ void pointcloud_rotation_node::pointCloudCallback(const sensor_msgs::msg::PointC
     pcl::PointCloud<pcl::PointXYZI>::Ptr input_cloud(new pcl::PointCloud<pcl::PointXYZI>());
     pcl::fromROSMsg(*msg, *input_cloud);
 
-    Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
-
-    transform(0, 0) = cos(sensor_rotation_y_);
-    transform(0, 2) = sin(sensor_rotation_y_);
-    transform(2, 0) = -sin(sensor_rotation_y_);
-    transform(2, 2) = cos(sensor_rotation_y_);
-
     pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_cloud(new pcl::PointCloud<pcl::PointXYZI>());
-    pcl::transformPointCloud(*input_cloud, *transformed_cloud, transform);
+    pcl::transformPointCloud(*input_cloud, *transformed_cloud, rotation_matrix_);
 
     sensor_msgs::msg::PointCloud2 ground_msg;
     pcl::toROSMsg(*transformed_cloud, ground_msg);
@@ -130,10 +129,11 @@ void pointcloud_rotation_node::pointCloudCallback(const sensor_msgs::msg::PointC
         vg.filter(*filtered_cloud);
 
         // Separate ground and non-ground points
-        pcl::PointCloud<pcl::PointXYZI>::Ptr ground_points(new pcl::PointCloud<pcl::PointXYZI>());
+        // pcl::PointCloud<pcl::PointXYZI>::Ptr ground_points(new pcl::PointCloud<pcl::PointXYZI>());
         pcl::PointCloud<pcl::PointXYZI>::Ptr notground_points(new pcl::PointCloud<pcl::PointXYZI>());
 
         pcl::PointCloud<pcl::PointXYZI>::Ptr seed_points(new pcl::PointCloud<pcl::PointXYZI>());
+        seed_points->clear();
         extractInitialSeeds(filtered_cloud, seed_points);
 
         Model model = estimatePlane(*seed_points);
@@ -141,11 +141,16 @@ void pointcloud_rotation_node::pointCloudCallback(const sensor_msgs::msg::PointC
         for (auto &point : filtered_cloud->points)
         {
             float dist = model.normal(0) * point.x + model.normal(1) * point.y + model.normal(2) * point.z + model.d;
-            if (dist < th_dist_)
-            {
-                ground_points->points.push_back(point);
-            }
-            else
+            // if (dist < th_dist_)
+            // {
+            //     ground_points->points.push_back(point);
+            // }
+            // else
+            // {
+            //     notground_points->points.push_back(point);
+            // }
+
+            if (dist >= th_dist_)
             {
                 notground_points->points.push_back(point);
             }
@@ -186,24 +191,27 @@ pointcloud_rotation_node::Model pointcloud_rotation_node::estimatePlane(const pc
 
 void pointcloud_rotation_node::extractInitialSeeds(const pcl::PointCloud<pcl::PointXYZI>::Ptr &cloud_in, pcl::PointCloud<pcl::PointXYZI>::Ptr &seed_points)
 {
-    std::vector<pcl::PointXYZI> cloud_sorted(cloud_in->points.begin(), cloud_in->points.end());
-    std::sort(cloud_sorted.begin(), cloud_sorted.end(), [](const pcl::PointXYZI &a, const pcl::PointXYZI &b)
-              { return a.z < b.z; });
+    // Step 1: Partition the cloud based on z value
+    auto partition_point = std::partition(cloud_in->points.begin(), cloud_in->points.end(), [&](const pcl::PointXYZI &point)
+                                          { return point.z < -1.5 * sensor_height_; });
 
-    auto it = std::find_if(cloud_sorted.begin(), cloud_sorted.end(), [&](const pcl::PointXYZI &point)
-                           { return point.z >= -1.5 * sensor_height_; });
+    // Step 2: The "above threshold" points are now in [partition_point, cloud_in->points.end()]
+    pcl::PointCloud<pcl::PointXYZI>::Ptr filtered_cloud(new pcl::PointCloud<pcl::PointXYZI>());
+    filtered_cloud->points.assign(partition_point, cloud_in->points.end());
 
-    cloud_sorted.erase(cloud_sorted.begin(), it);
+    // Step 3: Compute the LPR height by averaging the first 'num_lpr_' points in the filtered cloud
+    double LPR_height = 0.0;
+    int num_lpr = std::min(num_lpr_, static_cast<int>(filtered_cloud->points.size()));
 
-    double LPR_height = 0;
-    for (int i = 0; i < num_lpr_ && i < static_cast<int>(cloud_sorted.size()); ++i)
+    for (int i = 0; i < num_lpr; ++i)
     {
-        LPR_height += cloud_sorted[i].z;
+        LPR_height += filtered_cloud->points[i].z;
     }
-    LPR_height /= std::max(1, num_lpr_);
+    LPR_height /= num_lpr;
 
+    // Step 4: Add points below the LPR height + th_seeds_ to seed_points
     seed_points->points.clear();
-    for (const auto &point : cloud_sorted)
+    for (const auto &point : filtered_cloud->points)
     {
         if (point.z < LPR_height + th_seeds_)
         {

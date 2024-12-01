@@ -86,8 +86,9 @@ private:
     Eigen::Vector4f ROI_MAX_POINT, ROI_MIN_POINT;
 
     // ==============  variables for pointcloud rotation  ==============
-    // variables
+
     float sensor_rotation_y_;
+    Eigen::Matrix4f rotation_matrix_;
 
     // functions
     void pointCloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
