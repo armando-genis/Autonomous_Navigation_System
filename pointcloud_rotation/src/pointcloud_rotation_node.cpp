@@ -49,6 +49,53 @@ pointcloud_rotation_node::pointcloud_rotation_node(/* args */) : Node("pointclou
     this->get_parameter("roi_min_z_", roi_min_z_);
 
     // ==================  variables for pointcloud rotation  ==================
+
+    // ==================  variables for ground remove  ==================
+    this->declare_parameter("num_seg_", 50);
+    this->declare_parameter("num_iter_", 25);
+    this->declare_parameter("num_lpr_", 10);
+    this->declare_parameter("th_seeds_", 1.0);
+    this->declare_parameter("th_dist_", 0.3);
+    this->declare_parameter("sensor_height_", 1.73);
+
+    this->get_parameter("num_seg_", num_seg_);
+    this->get_parameter("num_iter_", num_iter_);
+    this->get_parameter("num_lpr_", num_lpr_);
+    this->get_parameter("th_seeds_", th_seeds_);
+    this->get_parameter("th_dist_", th_dist_);
+    this->get_parameter("sensor_height_", sensor_height_);
+
+    // ==================  variables for pointcloud voxel  ==================
+    this->declare_parameter("voxel_leaf_size_x", double(0.0));
+    this->declare_parameter("voxel_leaf_size_y", double(0.0));
+    this->declare_parameter("voxel_leaf_size_z", double(0.0));
+    this->declare_parameter("voxel_condition", false);
+
+    this->get_parameter("voxel_leaf_size_x", voxel_leaf_size_x_);
+    this->get_parameter("voxel_leaf_size_y", voxel_leaf_size_y_);
+    this->get_parameter("voxel_leaf_size_z", voxel_leaf_size_z_);
+
+    this->get_parameter("voxel_condition", voxel_condition);
+
+    // ==================  variables for ROI boundaries  ==================
+
+    this->declare_parameter("roi_max_x_", double(0.0));
+    this->declare_parameter("roi_max_y_", double(0.0));
+    this->declare_parameter("roi_max_z_", double(0.0));
+
+    this->declare_parameter("roi_min_x_", double(0.0));
+    this->declare_parameter("roi_min_y_", double(0.0));
+    this->declare_parameter("roi_min_z_", double(0.0));
+
+    this->get_parameter("roi_max_x_", roi_max_x_);
+    this->get_parameter("roi_max_y_", roi_max_y_);
+    this->get_parameter("roi_max_z_", roi_max_z_);
+
+    this->get_parameter("roi_min_x_", roi_min_x_);
+    this->get_parameter("roi_min_y_", roi_min_y_);
+    this->get_parameter("roi_min_z_", roi_min_z_);
+
+    // ==================  variables for pointcloud rotation  ==================
     this->declare_parameter("sensor_rotation_y_", 0.0);
     this->get_parameter("sensor_rotation_y_", sensor_rotation_y_);
 
@@ -92,18 +139,14 @@ void pointcloud_rotation_node::pointCloudCallback(const sensor_msgs::msg::PointC
 
     auto init_time = std::chrono::system_clock::now();
 
+
+    auto init_time = std::chrono::system_clock::now();
+
     pcl::PointCloud<pcl::PointXYZI>::Ptr input_cloud(new pcl::PointCloud<pcl::PointXYZI>());
     pcl::fromROSMsg(*msg, *input_cloud);
 
-    Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
-
-    transform(0, 0) = cos(sensor_rotation_y_);
-    transform(0, 2) = sin(sensor_rotation_y_);
-    transform(2, 0) = -sin(sensor_rotation_y_);
-    transform(2, 2) = cos(sensor_rotation_y_);
-
     pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_cloud(new pcl::PointCloud<pcl::PointXYZI>());
-    pcl::transformPointCloud(*input_cloud, *transformed_cloud, transform);
+    pcl::transformPointCloud(*input_cloud, *transformed_cloud, rotation_matrix_);
 
     sensor_msgs::msg::PointCloud2 ground_msg;
     pcl::toROSMsg(*transformed_cloud, ground_msg);

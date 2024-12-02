@@ -40,6 +40,9 @@
 // Eigen
 #include <Eigen/Dense>
 
+// Eigen
+#include <Eigen/Dense>
+
 class pointcloud_rotation_node : public rclcpp::Node
 {
 private:
@@ -91,12 +94,14 @@ private:
     // variables
     float sensor_rotation_y_;
     Eigen::Matrix4f rotation_matrix_;
+    Eigen::Matrix4f rotation_matrix_;
 
     // functions
     void pointCloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
     // subscriber & publisher
     rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_;
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_;
+    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr voxel_grid_pub_;
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr voxel_grid_pub_;
 
 public:

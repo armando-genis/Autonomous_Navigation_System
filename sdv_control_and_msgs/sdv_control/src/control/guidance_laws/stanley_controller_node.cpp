@@ -16,7 +16,9 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "controllers/guidance_laws/stanley_controller.cpp"
+#include "controllers/guidance_laws/stanley_controller.cpp"
 
+#include "std_msgs/msg/float64.hpp"
 #include "std_msgs/msg/float64.hpp"
 #include "std_msgs/msg/header.hpp"
 #include "std_msgs/msg/float64.hpp"
@@ -35,6 +37,7 @@
 #include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "geometry_msgs/msg/pose.hpp"
+#include "geometry_msgs/msg/pose.hpp"
 
 #include "nav_msgs/msg/path.hpp"
 #include "nav_msgs/msg/odometry.hpp"
@@ -44,6 +47,9 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include "tf2_ros/buffer.h"
 
+using namespace std::chrono_literals;
+
+class StanleyControllerNode : public rclcpp::Node
 using namespace std::chrono_literals;
 
 class StanleyControllerNode : public rclcpp::Node
@@ -61,13 +67,17 @@ class StanleyControllerNode : public rclcpp::Node
         /* Stanley Params */
         double k_{2};
         double k_soft_{1.1};
+        double k_{2};
+        double k_soft_{1.1};
         std::vector<double> DELTA_SAT_; // {max, min} steering in rads
         uint8_t precision_{10};
 
         /* Control signals */
         double vel_;
         std_msgs::msg::Float64 delta_;
+        std_msgs::msg::Float64 delta_;
         std_msgs::msg::Float64 steering_setpoint_;
+        std_msgs::msg::Float64 velocity_setpoint_;
         std_msgs::msg::Float64 velocity_setpoint_;
         const double delta_to_steer = 1 / 0.0658; // relation from delta to steering wheel angle
 
@@ -78,16 +88,22 @@ class StanleyControllerNode : public rclcpp::Node
 
         /* Path */
         geometry_msgs::msg::Pose p1_, p2_;
+        geometry_msgs::msg::Pose p1_, p2_;
         nav_msgs::msg::Path reference_path_;
+
 
         size_t waypoint_ = 0;
         size_t waypoint_base_ = 0;
         size_t path_length_;
         // double DISTANCE_VAL_ = 0.5;                // Meters
         double DISTANCE_VAL_ = 3;                // Meters
+        // double DISTANCE_VAL_ = 0.5;                // Meters
+        double DISTANCE_VAL_ = 3;                // Meters
         std::string parent_frame_;
         nav_msgs::msg::Path smooth_path_;
 
+        const double kLookaheadDistance = 4.0;
+        const double kBehindDistance = 1.0;
         const double kLookaheadDistance = 4.0;
         const double kBehindDistance = 1.0;
 
@@ -105,11 +121,15 @@ class StanleyControllerNode : public rclcpp::Node
         rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr car_steering_pub_;
         rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr car_steering_setpoint_pub_;
         rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr velocity_setpoint_pub_;
+        rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr car_steering_pub_;
+        rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr car_steering_setpoint_pub_;
+        rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr velocity_setpoint_pub_;
         rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr current_ref_pub_;
         rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr smooth_path_pub_;
 
 
         /* Subscribers */
+        rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr imu_velocity_sub_;
         rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr imu_velocity_sub_;
         rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr path_to_follow_;
         rclcpp::Subscription<visualization_msgs::msg::Marker>::SharedPtr lookahead_wp_sub_;
@@ -129,6 +149,7 @@ class StanleyControllerNode : public rclcpp::Node
                             this->get_logger(), "Could not transform %s to %s: %s",
                             "map", "velodyne", ex.what());
                         return;
+                    }
                     }
 
                     vehicle_pos_.x = transform.transform.translation.x;
@@ -174,6 +195,7 @@ std::cout << "huh" << std::endl;
                     );
                     stanley_->setYawAngle(psi_);
                     stanley_->calculateSteering(vel_, precision_);
+
 
                     delta_.data = stanley_->delta_;
                     steering_setpoint_.data = std::round(stanley_->delta_ * delta_to_steer * 0.8 * 100.0) / 100.0;
@@ -238,20 +260,27 @@ std::cout << "huh" << std::endl;
         }
 
         double distance(geometry_msgs::msg::Vector3 v, geometry_msgs::msg::Point p){
+            velocity_setpoint_pub_->publish(velocity_setpoint_);
+        }
+
+        double distance(geometry_msgs::msg::Vector3 v, geometry_msgs::msg::Point p){
             return sqrt(pow(v.x - p.x, 2) + pow(v.y - p.y, 2));
         }
 
         // needed direction for the transform vector to point towards p
         double needed_angle(geometry_msgs::msg::Vector3 v, geometry_msgs::msg::Point p){
+        double needed_angle(geometry_msgs::msg::Vector3 v, geometry_msgs::msg::Point p){
             return std::atan2(p.y - v.y, p.x - v.x);
         }
 
+        double get_angle_diff(geometry_msgs::msg::Vector3 v, geometry_msgs::msg::Point p){
         double get_angle_diff(geometry_msgs::msg::Vector3 v, geometry_msgs::msg::Point p){
             double angle_diff = std::fmod((psi_ - needed_angle(v, p) + M_PI), 2*M_PI) - M_PI;
             return angle_diff < -M_PI ? angle_diff + 2*M_PI : angle_diff;        
         }
 
     public:
+        StanleyControllerNode() : Node("stanley_controller_node")
         StanleyControllerNode() : Node("stanley_controller_node")
         {
             tf_buffer_ =
@@ -279,9 +308,15 @@ std::cout << "huh" << std::endl;
             car_steering_setpoint_pub_ = this->create_publisher<std_msgs::msg::Float64>("/sdv/steering/can_setpoint", 1);
             current_ref_pub_ = this->create_publisher<nav_msgs::msg::Path>("/sdv/steering/current_reference", 1);
             velocity_setpoint_pub_ = this->create_publisher<std_msgs::msg::Float64>("/sdv/velocity/desired_setpoint", 1);
+            velocity_setpoint_pub_ = this->create_publisher<std_msgs::msg::Float64>("/sdv/velocity/desired_setpoint", 1);
             smooth_path_pub_ = this->create_publisher<nav_msgs::msg::Path>("/sdv/steering/smooth_path", 1);
 
             /* Subscribers */
+            imu_velocity_sub_ = this->create_subscription<nav_msgs::msg::Odometry>("/vectornav/velocity_body",
+                1, [this](const nav_msgs::msg::Odometry &msg) { 
+                    vel_ = msg.twist.twist.linear.x;
+                    vel_msgs_received_ = true;
+                });
             imu_velocity_sub_ = this->create_subscription<nav_msgs::msg::Odometry>("/vectornav/velocity_body",
                 1, [this](const nav_msgs::msg::Odometry &msg) { 
                     vel_ = msg.twist.twist.linear.x;
@@ -335,6 +370,7 @@ std::cout << "huh" << std::endl;
 int main(int argc, char * argv[])
 {
     rclcpp::init(argc, argv);
+    rclcpp::spin(std::make_shared<StanleyControllerNode>());
     rclcpp::spin(std::make_shared<StanleyControllerNode>());
     rclcpp::shutdown();
     return 0;

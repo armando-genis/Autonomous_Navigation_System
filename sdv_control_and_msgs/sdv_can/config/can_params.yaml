@@ -8,3 +8,10 @@ can_node_sdv:
     steer_enable: true
     brake_enable: true
     throttle_enable: true
+
+
+can_node_sdv:
+  ros__parameters:
+    steer_enable: true
+    brake_enable: true
+    throttle_enable: true
