@@ -29,7 +29,7 @@ void toggle_led(uint8_t i){
             HAL_GPIO_TogglePin(DEBUG_3_GPIO_Port, DEBUG_3_Pin);
             break;
         case 3:
-            HAL_GPIO_TogglePin(DEBUG_4_GPIO_Port, DEBUG_4_Pin);
+//            HAL_GPIO_TogglePin(DEBUG_4_GPIO_Port, DEBUG_4_Pin);
             break;
         default:
             break;

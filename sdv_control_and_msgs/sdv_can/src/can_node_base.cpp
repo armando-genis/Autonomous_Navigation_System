@@ -6,7 +6,7 @@
 
 CanNodeBase::CanNodeBase(const std::string &name)
     : Node(name), can_stream_(ios_), signals_(ios_, SIGINT, SIGTERM) {
-  this->declare_parameter("can_interface", "can0");
+  this->declare_parameter("can_interface", "can2");
   std::string can_interface = this->get_parameter("can_interface").as_string();
   RCLCPP_INFO(this->get_logger(), "Using %s interface", can_interface.c_str());
 

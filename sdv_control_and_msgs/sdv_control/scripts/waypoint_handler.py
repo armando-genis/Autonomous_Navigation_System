@@ -64,7 +64,7 @@ class WaypointNode(Node):
                 pose_stmpd.header.frame_id = parent_frame
                 pose_stmpd.pose.position.x = float(row[0])
                 pose_stmpd.pose.position.y = float(row[1])
-                pose_stmpd.pose.position.z = float(row[2])
+                pose_stmpd.pose.position.z = float(row[2]) - 1.8
         
                 self.path_.poses.append(pose_stmpd)
 

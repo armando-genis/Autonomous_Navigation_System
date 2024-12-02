@@ -1,9 +1,9 @@
 waypoints_routing_node:
   ros__parameters:
-    map_path: "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/map_visualizer/osms/open_house_v2.osm"
+    map_path: "/home/vanttec/sdv_ws/src/Autonomous_Navigation_System/map_visualizer/osms/mty_map_full_2.osm"
     start_lanelet_id: 7
-    end_lanelet_id: 286
+    end_lanelet_id: 721
 
 osm_visualizer:
   ros__parameters:
-    map_path: "/home/genis/Desktop/sdv_ws/src/Autonomous_Navigation_System/map_visualizer/osms/open_house_v2.osm"
+    map_path: "/home/vanttec/sdv_ws/src/Autonomous_Navigation_System/map_visualizer/osms/mty_map_full_2.osm"

@@ -24,7 +24,8 @@ uint16_t deserialize_short(const uint8_t *data) {
     out = data[0] << 8;
     out |= data[1];
 
-    return vanttec_ntohs(out);
+    //return vanttec_ntohs(out);
+    return out;
 }
 
 uint32_t deserialize_long(const uint8_t *data) {
@@ -34,7 +35,8 @@ uint32_t deserialize_long(const uint8_t *data) {
     out |= data[2] << (8);
     out |= data[3] & 0xff;
 
-    return vanttec_ntohl(out);
+    //return vanttec_htonl(out);
+    return out;
 }
 #ifdef __cplusplus
 }
