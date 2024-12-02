@@ -27,6 +27,6 @@ def generate_launch_description():
     )
     
     return launch.LaunchDescription([
-        publisher_node_rotation
+        publisher_node_rotation,
         # publisher_node_lidar_imu_sync
     ])
