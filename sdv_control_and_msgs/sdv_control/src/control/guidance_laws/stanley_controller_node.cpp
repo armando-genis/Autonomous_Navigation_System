@@ -17,7 +17,6 @@
 
 #include "controllers/guidance_laws/stanley_controller.cpp"
 
-#include "std_msgs/msg/float64.hpp"
 #include "std_msgs/msg/header.hpp"
 #include "std_msgs/msg/float64.hpp"
 
@@ -73,7 +72,7 @@ class StanleyControllerNode : public rclcpp::Node
 
         /* Vehicle pose */
         std::vector<double> init_pose_ = {0,0,0};
-        Point vehicle_pos_ = {0, 0};
+        Point vehicle_pos_ = {0, 0, 0};
         double psi_{0};
 
         /* Path */
@@ -98,9 +97,6 @@ class StanleyControllerNode : public rclcpp::Node
         std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
         std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
 
-
-
-
         /* Publishers */
         rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr car_steering_pub_;
         rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr car_steering_setpoint_pub_;
@@ -108,132 +104,74 @@ class StanleyControllerNode : public rclcpp::Node
         rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr current_ref_pub_;
         rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr smooth_path_pub_;
 
-
         /* Subscribers */
         rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr imu_velocity_sub_;
         rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr path_to_follow_;
         rclcpp::Subscription<visualization_msgs::msg::Marker>::SharedPtr lookahead_wp_sub_;
         
-
         void timer_callback(){
             velocity_setpoint_.data = 0.;
             current_ref_.poses.clear();
             if(path_arrived_ && this->get_clock()->now() - last_path_message < rclcpp::Duration(0, 100 * 1e6) ) {
-                    geometry_msgs::msg::TransformStamped transform;
-                    try {
-                        transform = tf_buffer_->lookupTransform(
-                            "map", "velodyne",
-                            tf2::TimePointZero);
-                    } catch (const tf2::TransformException & ex) {
-                        RCLCPP_INFO(
-                            this->get_logger(), "Could not transform %s to %s: %s",
-                            "map", "velodyne", ex.what());
-                        return;
-                    }
+                geometry_msgs::msg::TransformStamped transform;
+                try {
+                    transform = tf_buffer_->lookupTransform(
+                        "map", "velodyne",
+                        tf2::TimePointZero);
+                } catch (const tf2::TransformException & ex) {
+                    RCLCPP_INFO(
+                        this->get_logger(), "Could not transform %s to %s: %s",
+                        "map", "velodyne", ex.what());
+                    return;
+                }
 
-                    vehicle_pos_.x = transform.transform.translation.x;
-                    vehicle_pos_.y = transform.transform.translation.y;
+                vehicle_pos_.x = transform.transform.translation.x;
+                vehicle_pos_.y = transform.transform.translation.y;
+                vehicle_pos_.z = transform.transform.translation.z - 1.45;
 
-                    tf2::Quaternion quat;
-                    tf2::fromMsg(transform.transform.rotation, quat);
-                    double roll, pitch;
-                    tf2::Matrix3x3(quat).getRPY(roll, pitch, psi_);
-                    // psi_ = std::fmod((psi_+M_PI/2.0) + M_PI, 2*M_PI); // [-pi, pi]
-                    // if(psi_ < 0.0){
-                    //     psi_ += 2*M_PI;
-                    // }
-                    // psi_ -= M_PI;
+                tf2::Quaternion quat;
+                tf2::fromMsg(transform.transform.rotation, quat);
+                double roll, pitch;
+                tf2::Matrix3x3(quat).getRPY(roll, pitch, psi_);
 
-                    // if(waypoint_base_ == -1){
-                        p1_.position.x = vehicle_pos_.x;
-                        p1_.position.y = vehicle_pos_.y;
-                        p1_.position.z = transform.transform.translation.z - 1.45;
-                    // } else {
-                    //     p1_ = smooth_path_.poses[waypoint_base_].pose;
-                    // }
+                p1_.position = geometry_msgs::build<geometry_msgs::msg::Point>()
+                    .x(vehicle_pos_.x)
+                    .y(vehicle_pos_.y)
+                    .z(vehicle_pos_.z);
 
-                    // p2_ = smooth_path_.poses[waypoint_].pose;
-                    // p2_.position.z+=0.0;
-std::cout << "huh" << std::endl;
-            geometry_msgs::msg::PoseStamped pose_stamped_tmp_;
-            pose_stamped_tmp_.header.frame_id = "map";
-            pose_stamped_tmp_.pose = p1_;
-                    current_ref_.poses.push_back(pose_stamped_tmp_);
-            pose_stamped_tmp_.pose = p2_;
-                    current_ref_.poses.push_back(pose_stamped_tmp_);
+                geometry_msgs::msg::PoseStamped pose_stamped_tmp_;
+                pose_stamped_tmp_.header.frame_id = "map";
+                pose_stamped_tmp_.pose = p1_;
+                current_ref_.poses.push_back(pose_stamped_tmp_);
+                pose_stamped_tmp_.pose = p2_;
+                current_ref_.poses.push_back(pose_stamped_tmp_);
 
-
-                    stanley_->calculateCrosstrackError(vehicle_pos_, 
-                        Point{p1_.position.x, p1_.position.y}, 
-                        Point{p2_.position.x, p2_.position.y}
-                        );
-                        std::cout << "huh" << std::endl;
-
-                    RCLCPP_INFO(this->get_logger(), "x: %f, y: %f, psi: %f", 
-                    vehicle_pos_.x, vehicle_pos_.y, psi_
+                stanley_->calculateCrosstrackError(vehicle_pos_, 
+                    Point{p1_.position.x, p1_.position.y, p1_.position.z}, 
+                    Point{p2_.position.x, p2_.position.y, p2_.position.z}
                     );
-                    stanley_->setYawAngle(psi_);
-                    stanley_->calculateSteering(vel_, precision_);
 
-                    delta_.data = stanley_->delta_;
-                    steering_setpoint_.data = std::round(stanley_->delta_ * delta_to_steer * 0.8 * 100.0) / 100.0;
-                    
+                // RCLCPP_INFO(this->get_logger(), "x: %f, y: %f, psi: %f", 
+                // vehicle_pos_.x, vehicle_pos_.y, psi_
+                // );
 
-                    car_steering_pub_->publish(steering_setpoint_);
-                    car_steering_setpoint_pub_->publish(steering_setpoint_);
-                    current_ref_pub_->publish(current_ref_);
+                stanley_->setYawAngle(psi_);
+                stanley_->calculateSteering(vel_, precision_);
 
-                    velocity_setpoint_.data = 0.5;
-                    // velocity_setpoint_.data = smooth_path_.poses[waypoint_].pose.orientation.w;
+                delta_.data = stanley_->delta_;
+                steering_setpoint_.data = 
+                    std::round(stanley_->delta_ * delta_to_steer * 0.8 * 100.0) / 100.0;
 
-                    // // Find waypoint indexes
-                    // double angle_diff{0};
-                    // double dist{0};
+                car_steering_pub_->publish(steering_setpoint_);
+                car_steering_setpoint_pub_->publish(steering_setpoint_);
+                current_ref_pub_->publish(current_ref_);
 
-                    // // Only check for next waypoint if we have more waypoints.
-                    // if(waypoint_ < smooth_path_.poses.size()){
-                    //     // Find farthest point from current posision, limited by lookahead.
-                    //     std::size_t max_idx_ = waypoint_;
-                    //     std::size_t min_idx_ = -1;
-                    //     double max_distance_found_ = 0;
-                    //     for(int i = waypoint_; i < smooth_path_.poses.size(); i++){
-                    //         dist = distance(transform.transform.translation, smooth_path_.poses[i].pose.position);
-                    //         angle_diff = get_angle_diff(transform.transform.translation, smooth_path_.poses[i].pose.position);
-
-                    //         if(dist < kLookaheadDistance && dist > max_distance_found_ && ((i - max_idx_) < 10) && std::fabs(angle_diff) < 1.3){
-                    //             max_idx_ = i;
-                    //             max_distance_found_ = dist;
-                    //         }
-                    //     }
-                    //     waypoint_ = max_idx_;
-                    //     int i = waypoint_ - 1;
-                    //     while(i > 0 && min_idx_ == -1){
-                    //         dist = distance(transform.transform.translation, 
-                    //             smooth_path_.poses[i].pose.position);
-
-                    //         angle_diff = get_angle_diff(transform.transform.translation, 
-                    //             smooth_path_.poses[i].pose.position);
-                    //         if(std::fabs(angle_diff) > M_PI_2 && dist > kBehindDistance)
-                    //             min_idx_ = i;
-                    //         i--;
-                    //     }
-                    //     if(i == 0 && min_idx_ == -1)
-                    //         waypoint_base_ = -1;
-                    //     else
-                    //         waypoint_base_ = min_idx_;
-                        
-                    //     if(waypoint_ == smooth_path_.poses.size() - 1 && std::fabs(distance(
-                    //         transform.transform.translation, smooth_path_.poses[waypoint_].pose.position)) < 1)
-                    //         waypoint_++;
-                    // }
-                    // RCLCPP_INFO(this->get_logger(), "wp: %d", 
-                    // waypoint_
-                    // );
-
+                velocity_setpoint_.data = std::clamp(stanley_->ex_, 0.0, 1.0);
             } else {
-                    velocity_setpoint_.data = 0.;
+                velocity_setpoint_.data = 0.;
                 RCLCPP_INFO(this->get_logger(), "Waiting for reference path");
             }
+
             velocity_setpoint_pub_->publish(velocity_setpoint_);
         }
 
@@ -288,30 +226,15 @@ std::cout << "huh" << std::endl;
                     vel_msgs_received_ = true;
                 });
 
-            // path_to_follow_ = this->create_subscription<nav_msgs::msg::Path>("/path_waypoints",
-            //     1, [this](const nav_msgs::msg::Path &msg) { 
-            //         last_path_message = this->get_clock()->now();
-
-            //         smooth_path_.poses.clear();
-            //         smooth_path_ = msg;
-            //         path_arrived_ = true;
-            //         if(msg.poses.size() == 0){
-            //         waypoint_ = 0;
-            //         }
-            //         waypoint_base_ = 0;
-            //         // waypoint_base_ = 0;
-            //     });
-
             lookahead_wp_sub_ =  this->create_subscription<visualization_msgs::msg::Marker>("/target_waypoint_marker",
                 1, [this](const visualization_msgs::msg::Marker &msg) { 
                     last_path_message = this->get_clock()->now();
-                    // p2_.position.x = msg.pose.position.x;
+
                     p2_ = msg.pose;
                     p2_.position.z = msg.pose.position.z+0.1;
                     path_arrived_ = true;
 
                 });
-
 
             geometry_msgs::msg::PoseStamped pose_stamped_tmp_;
             pose_stamped_tmp_.header.frame_id = "map";
@@ -319,10 +242,6 @@ std::cout << "huh" << std::endl;
             current_ref_.header.stamp = StanleyControllerNode::now();
             current_ref_.poses.push_back(pose_stamped_tmp_);
             current_ref_.poses.push_back(pose_stamped_tmp_);
-
-            p2_.position.x = 0.;
-            p2_.position.y = 0.;
-            p2_.position.z = 0.;
 
             stanley_ = std::make_unique<StanleyController>(DELTA_SAT_[0], DELTA_SAT_[1], k_, k_soft_);
 

@@ -42,8 +42,6 @@ class VelRegulatorNode : public rclcpp::Node {
 
         double mode_value{1.};
 
-        // double perception_mode_value[3]{0., 0.5, 1.};
-
         std_msgs::msg::Float64 setpoint_msg;
 
         void update() {
