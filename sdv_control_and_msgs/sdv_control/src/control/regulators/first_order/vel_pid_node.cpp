@@ -37,7 +37,7 @@ class VelPidNode : public rclcpp::Node {
             controller = PID(params);
 
             velocity_setpoint_sub_ = this->create_subscription<std_msgs::msg::Float64>(
-                "/sdv/velocity/setpoint", 10,
+                "/sdv/velocity/desired_setpoint", 10,
                 [this](const std_msgs::msg::Float64 &msg) { vel_d = msg.data; });
 
             velocity_sub_ = this->create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
