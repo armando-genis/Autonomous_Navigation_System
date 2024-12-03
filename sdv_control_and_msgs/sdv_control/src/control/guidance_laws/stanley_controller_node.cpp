@@ -160,7 +160,8 @@ class StanleyControllerNode : public rclcpp::Node
 
                 delta_.data = stanley_->delta_;
                 steering_setpoint_.data = 
-                    std::round(stanley_->delta_ * delta_to_steer * 0.8 * 100.0) / 100.0;
+                    // std::round(stanley_->delta_ * delta_to_steer * 0.8 * 100.0) / 100.0;
+                    std::round(stanley_->delta_ * delta_to_steer * 0.8 * 500.0) / 500.0;
 
                 car_steering_pub_->publish(steering_setpoint_);
                 car_steering_setpoint_pub_->publish(steering_setpoint_);
