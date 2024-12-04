@@ -35,6 +35,11 @@ double PID::update(double measurement, double desired) {
   return std::clamp(set_u_, params_.kUMin, params_.kUMax);
 }
 
+void PID::reset(){
+  prev_error_= 0.0;
+  set_u_ = 0.0;
+}
+
 PIDParameters PID::defaultParams() {
   PIDParameters p{};
   p.kD = 0.0;

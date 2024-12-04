@@ -28,6 +28,7 @@ public:
   PID(const PIDParameters &params);
 
   double update(double measurement, double desired);
+  void reset();
 
   static PIDParameters defaultParams();
 

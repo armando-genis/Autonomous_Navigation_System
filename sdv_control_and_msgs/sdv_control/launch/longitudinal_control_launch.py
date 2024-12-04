@@ -26,6 +26,11 @@ def generate_launch_description():
       parameters=[car_params],
    )
 
+   pid_regulator_node = Node(
+      package='sdv_control',
+      executable='velocity_regulator_node',
+   )
+
    foxglove_bridge = Node(
       name="foxglove_bridge",
       package="foxglove_bridge",
@@ -48,6 +53,7 @@ def generate_launch_description():
 
    return LaunchDescription([
       pid_node,
+      pid_regulator_node,
       # foxglove_bridge,
       # can_node,
       # vectornav_launch,

@@ -21,6 +21,7 @@
 #include "std_msgs/msg/multi_array_dimension.hpp"
 #include "std_msgs/msg/float32.hpp"
 #include "std_msgs/msg/u_int8.hpp"
+#include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/string.hpp"
 
 #include "sdv_msgs/msg/eta_pose.hpp"
@@ -46,6 +47,14 @@ class VelPidNode : public rclcpp::Node {
                     vel = msg.twist.twist.linear.x;
                 });
 
+            is_auto_sub_ = this->create_subscription<std_msgs::msg::Bool>(
+                "/sdv/is_auto", 10,
+                [this](const std_msgs::msg::Bool &msg) { 
+                    if(!msg.data){
+                        controller.reset();
+                    }
+                });
+
             throttle_pub_ = this->create_publisher<std_msgs::msg::Float64>(
                 "/sdv/velocity/throttle", 10);
 
@@ -59,6 +68,7 @@ class VelPidNode : public rclcpp::Node {
 
         rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr velocity_setpoint_sub_;
         rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr velocity_sub_;
+        rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr is_auto_sub_;
         rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr throttle_pub_;
 
         rclcpp::TimerBase::SharedPtr updateTimer;
