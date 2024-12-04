@@ -37,8 +37,14 @@ def generate_launch_description():
       executable='velocity_regulator_node',
    )
 
+   foxglove_bridge = Node(
+      name="foxglove_bridge",
+      package="foxglove_bridge",
+      executable="foxglove_bridge")
+
    return LaunchDescription([
       car_guidance_node,
       pid_node,
       pid_regulator_node,
+      foxglove_bridge,
    ])

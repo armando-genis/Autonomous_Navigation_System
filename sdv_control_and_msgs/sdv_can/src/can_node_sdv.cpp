@@ -33,7 +33,7 @@ public:
         // [steer_motor_angle_sub] : convert Float64 to CANMessage and send it
         steer_motor_angle_sub = this->create_subscription<std_msgs::msg::Float64>(
             "/sdv/steering/setpoint", 10, [this](const std_msgs::msg::Float64::SharedPtr msg){
-                if(steer_enable){
+                if(steer_enable && last_throttle >= this->max_throttle_threshold){
                     uint8_t base_msg_id = (STEER_MOTOR_ID & 0b11) << 6;
                     vanttec::CANMessage can_msg;
                     vanttec::packFloat(can_msg, base_msg_id | 0x01, msg->data);
@@ -45,6 +45,7 @@ public:
         // [throttle_setpoint_sub] : convert Float64 to CANMessage and send it
         throttle_setpoint_sub = this->create_subscription<std_msgs::msg::Float64>(
             "/sdv/velocity/throttle", 10, [this](const std_msgs::msg::Float64::SharedPtr msg){
+                last_throttle = msg->data;
                 last_throttle_message = this->get_clock()->now();
                 vanttec::CANMessage throttle_msg, braking_msg;
                 double output = std::clamp(msg->data, -1., 1.);
@@ -229,6 +230,7 @@ private:
     bool steer_enable{true}, throttle_enable{true}, brake_enable{true};
     double min_throttle_threshold{-0.05};
     double max_throttle_threshold{0.05};
+    double last_throttle;
     rclcpp::TimerBase::SharedPtr throttle_watchdog_timer_;
     rclcpp::Time last_throttle_message;
 
