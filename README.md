@@ -1,5 +1,10 @@
 # Autonomous_Navigation_System
- 
+  This repository contains ROS2 Humble packages implementing and integrating planning algorithms, mapping and localization systems, and obstacle detection and tracking capabilities to equip a golf cart shuttle with autonomous functionalities for on-campus mobility. 
+
+![Reeds-Shepp-Curves Screenshot](https://github.com/armando-genis/Autonomous_Navigation_System/blob/main/imgs/im2.jpeg)
+
+![Reeds-Shepp-Curves Screenshot](https://github.com/armando-genis/Autonomous_Navigation_System/blob/main/imgs/im1.jpeg)
+
 ## → 📥 Install dependencies
 Before installing the necessary dependencies, remember to source the appropriate ROS2 environment for your ROS2 version. This ensures the correct packages are installed for your distribution.
 
