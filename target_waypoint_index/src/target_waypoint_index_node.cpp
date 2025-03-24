@@ -13,13 +13,18 @@ target_waypoint_index_node::target_waypoint_index_node(/* args */) : Node("targe
     this->get_parameter("mps_alpha", mps_alpha);
     this->get_parameter("mps_beta", mps_beta);
 
-    waypoints_subscription_ = this->create_subscription<visualization_msgs::msg::MarkerArray>(
-        "/waypoints_routing", 10, std::bind(&target_waypoint_index_node::waypoints_callback, this, std::placeholders::_1));
+    // waypoints_subscription_ = this->create_subscription<visualization_msgs::msg::MarkerArray>(
+    //     "/waypoints_routing", 10, std::bind(&target_waypoint_index_node::waypoints_callback, this, std::placeholders::_1));
 
     timer_ = this->create_wall_timer(std::chrono::milliseconds(100), std::bind(&target_waypoint_index_node::pub_callback, this));
 
+    waypoints_subscription_ = this->create_subscription<nav_msgs::msg::Path>(
+        "path_waypoints", 10, std::bind(&target_waypoint_index_node::waypoints_callback, this, std::placeholders::_1));
+
     // for debugging
     target_waypoint_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("target_waypoint_marker", 10);
+
+    last_time_ = this->now();
 
     RCLCPP_INFO(this->get_logger(), "\033[1;32m----> target_waypoint_index_node initialized.\033[0m");
 
@@ -31,6 +36,19 @@ target_waypoint_index_node::target_waypoint_index_node(/* args */) : Node("targe
 
 void target_waypoint_index_node::pub_callback()
 {
+
+    // Check if waypoints have been received
+    if (waypoints.empty())
+    {
+        RCLCPP_WARN(this->get_logger(), "\033[1;33m----> No waypoints received yet.\033[0m");
+        return;
+    }
+
+    if (this->get_clock()->now() - last_time_ > rclcpp::Duration(0, 100 * 1e6))
+    {
+        RCLCPP_INFO(this->get_logger(), "\033[1;31m----> No waypoints received.\033[0m");
+        return;
+    }
     getCurrentRobotState();
     waypointsComputation();
     marketTargetWaypoint();
@@ -44,6 +62,7 @@ void target_waypoint_index_node::getCurrentRobotState()
         pose_tf = tf2_buffer.lookupTransform("map", "velodyne", tf2::TimePointZero).transform;
         current_x_ = pose_tf.translation.x;
         current_y_ = pose_tf.translation.y;
+        current_z_ = pose_tf.translation.z - 1.55;
         tf2::Quaternion quat;
         tf2::fromMsg(pose_tf.rotation, quat);
         double roll, pitch, yaw;
@@ -57,22 +76,23 @@ void target_waypoint_index_node::getCurrentRobotState()
     }
 }
 
-void target_waypoint_index_node::waypoints_callback(const visualization_msgs::msg::MarkerArray::SharedPtr msg)
+void target_waypoint_index_node::waypoints_callback(const nav_msgs::msg::Path::SharedPtr msg)
 {
+    last_time_ = this->get_clock()->now();
     waypoints.clear();
 
-    for (const auto &marker : msg->markers)
+    for (const auto &pose : msg->poses)
     {
         Eigen::VectorXd waypoint(4);
-        waypoint(0) = marker.pose.position.x;
-        waypoint(1) = marker.pose.position.y;
-        waypoint(2) = marker.pose.position.z;
+        waypoint(0) = pose.pose.position.x;
+        waypoint(1) = pose.pose.position.y;
+        waypoint(2) = pose.pose.position.z;
 
         tf2::Quaternion q(
-            marker.pose.orientation.x,
-            marker.pose.orientation.y,
-            marker.pose.orientation.z,
-            marker.pose.orientation.w);
+            pose.pose.orientation.x,
+            pose.pose.orientation.y,
+            pose.pose.orientation.z,
+            pose.pose.orientation.w);
 
         // Extract yaw from the quaternion
         tf2::Matrix3x3 m(q);
@@ -196,13 +216,13 @@ void target_waypoint_index_node::marketTargetWaypoint()
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.pose.position.x = waypoints[target_waypoint](0);
     marker.pose.position.y = waypoints[target_waypoint](1);
-    marker.pose.position.z = waypoints[target_waypoint](2);
+    marker.pose.position.z = current_z_;
 
     tf2::Quaternion q;
     q.setRPY(0, 0, waypoints[target_waypoint](3));
     marker.pose.orientation = tf2::toMsg(q);
 
-    marker.scale.x = 2.1;
+    marker.scale.x = 1.1;
     marker.scale.y = 1.1;
     marker.scale.z = 1.1;
     marker.color.r = 1.0;

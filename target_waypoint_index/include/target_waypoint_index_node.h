@@ -39,9 +39,10 @@ private:
     double mps_beta = 0.0;      // [m/s]
 
     // Variables of the car position
-    double current_yaw_ = 0.0;    // [rad]
-    double current_x_ = 0.0;      // [m]
-    double current_y_ = 0.0;      // [m]
+    double current_yaw_ = 0.0; // [rad]
+    double current_x_ = 0.0;   // [m]
+    double current_y_ = 0.0;   // [m]
+    double current_z_ = 0.0;
     double current_velocity_ = 0; // [m/s]
 
     // tf2 buffer & listener
@@ -59,9 +60,12 @@ private:
     float maximum_distance = 0.0;
     size_t target_waypoint = 0;
 
+    rclcpp::Time last_time_;
+
     // Subscriptions & Publishers
     rclcpp::TimerBase::SharedPtr timer_;
-    rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr waypoints_subscription_;
+    // rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr waypoints_subscription_;
+    rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr waypoints_subscription_;
 
     // for debugging
     rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr target_waypoint_pub_;
@@ -70,7 +74,7 @@ private:
     // functions
     void pub_callback();
     void getCurrentRobotState();
-    void waypoints_callback(const visualization_msgs::msg::MarkerArray::SharedPtr msg);
+    void waypoints_callback(const nav_msgs::msg::Path::SharedPtr msg);
     double getDistance(Eigen::VectorXd point1, Eigen::VectorXd point2);
     double LookAheadDistance();
     double getDistanceFromOdom(Eigen::VectorXd wapointPoint);
