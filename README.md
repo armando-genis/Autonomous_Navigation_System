@@ -1,5 +1,9 @@
 # Autonomous_Navigation_System
-  This repository contains ROS2 Humble packages implementing and integrating planning algorithms, mapping and localization systems, and obstacle detection and tracking capabilities to equip a golf cart shuttle with autonomous functionalities for on-campus mobility. 
+
+⚠️ **Note**: The local path planning module in this project uses components developed in a second repository:  
+🔗 [https://github.com/armando-genis/Autonomous_dynamic_path_planning](https://github.com/armando-genis/Autonomous_dynamic_path_planning)  
+
+This repository contains ROS2 Humble packages implementing and integrating planning algorithms, mapping and localization systems, and obstacle detection and tracking capabilities to equip a golf cart shuttle with autonomous functionalities for on-campus mobility. 
 
 ![Reeds-Shepp-Curves Screenshot](https://github.com/armando-genis/Autonomous_Navigation_System/blob/main/imgs/im2.jpeg)
 
