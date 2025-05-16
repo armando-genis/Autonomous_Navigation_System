@@ -1,5 +1,7 @@
 # Autonomous_Navigation_System
 
+⚠️ **Deprecated**: This repository is no longer maintained. Please refer to the [navpilot-framework](https://github.com/armando-genis/navpilot-framework) repository for ongoing development.
+
 ⚠️ **Note**: The local path planning module in this project uses components developed in a second repository:  
 🔗 [https://github.com/armando-genis/Autonomous_dynamic_path_planning](https://github.com/armando-genis/Autonomous_dynamic_path_planning)  
 
